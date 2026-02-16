@@ -2334,3 +2334,89 @@ Examples:
 ---
 
 ## Last Updated: February 16, 2026
+
+
+---
+
+## Database Migration - MongoDB to PostgreSQL (February 16, 2026) ✅ COMPLETE
+
+### Migration Summary
+Complete database migration from MongoDB to PostgreSQL with zero downtime approach.
+
+### Technical Changes
+
+**Database:**
+- **From:** MongoDB (motor/pymongo async driver)
+- **To:** PostgreSQL 15 with SQLAlchemy 2.0 async (asyncpg)
+
+**Architecture:**
+- Created SQLAlchemy ORM models in `/app/backend/models/entities/`
+- Updated repositories to use SQLAlchemy queries
+- Created compatibility layer (`core/legacy_db.py`) for legacy routes
+
+### New Entity Models
+```
+/app/backend/models/entities/
+├── __init__.py          # Exports all models
+├── base.py              # User, Role, Lead, Account, Quotation, Sample, Followup
+├── inventory.py         # Item, Warehouse, Stock, StockTransfer, Batch, StockLedger
+├── production.py        # Machine, OrderSheet, WorkOrder, ProductionEntry, WorkOrderStage
+├── accounts.py          # Invoice, Payment, JournalEntry, ChartOfAccounts, Ledger, Expense
+├── procurement.py       # Supplier, PurchaseOrder, PurchaseRequisition, GRN, LandingCost
+├── hrms.py              # Employee, Attendance, LeaveRequest, Payroll, Loan, Holiday
+└── other.py             # QCInspection, SalesTarget, SystemSetting, Branch, Notification, etc.
+```
+
+### Database Schema Features
+- **Primary Keys:** UUID (String 36) for all tables
+- **Timestamps:** created_at, updated_at, created_by, updated_by on all tables
+- **JSONB:** Used for flexible fields (custom_fields, items arrays, specifications)
+- **Foreign Keys:** Proper relationships with indexes
+- **Constraints:** Unique constraints on codes, emails, document numbers
+
+### Legacy Compatibility Layer
+`core/legacy_db.py` provides MongoDB-like interface:
+- `db.collection.find_one(query)` → SQLAlchemy select with filters
+- `db.collection.find(query).to_list()` → SELECT with conditions
+- `db.collection.insert_one(doc)` → INSERT
+- `db.collection.update_one(query, {$set: data})` → UPDATE
+- `db.collection.delete_one(query)` → DELETE
+- Supports MongoDB operators: `$in`, `$nin`, `$ne`, `$lt`, `$lte`, `$gt`, `$gte`, `$regex`
+
+### Environment Variables
+```env
+# Old (MongoDB - removed)
+# MONGO_URL=mongodb://localhost:27017
+# DB_NAME=instabiz
+
+# New (PostgreSQL)
+DATABASE_URL=postgresql+asyncpg://erp_user:erp_secure_password@localhost:5432/adhesive_erp
+```
+
+### Dependencies Updated
+**Removed:**
+- motor
+- pymongo
+
+**Added:**
+- asyncpg
+- SQLAlchemy[asyncio]
+- greenlet
+
+### Testing Results
+- **Test Report:** `/app/test_reports/iteration_27.json`
+- **Backend Tests:** 16/16 passed (100%)
+- **Features Verified:**
+  - Authentication (login, token validation)
+  - Dashboard (CRM, revenue, inventory metrics)
+  - CRM Leads CRUD (v1 API)
+  - Inventory Items CRUD (v1 API)
+  - Legacy routes (via compatibility layer)
+
+### Migration Notes
+- Tables auto-created on server startup via `init_db()`
+- Fresh start - no data migration required
+- PostgreSQL service started via `service postgresql start`
+- MongoDB service stopped (no longer needed)
+
+---
