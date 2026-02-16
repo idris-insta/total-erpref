@@ -66,6 +66,7 @@ class Lead(Base, UUIDMixin, TimestampMixin):
     status: Mapped[str] = mapped_column(String(50), default="new", index=True)
     industry: Mapped[str] = mapped_column(String(100), nullable=True)
     expected_value: Mapped[float] = mapped_column(Float, nullable=True)
+    estimated_value: Mapped[float] = mapped_column(Float, nullable=True)  # Alias for expected_value
     probability: Mapped[int] = mapped_column(Integer, nullable=True)
     assigned_to: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=True, index=True)
     notes: Mapped[str] = mapped_column(Text, nullable=True)
