@@ -86,18 +86,41 @@ class Account(Base, UUIDMixin, TimestampMixin):
     account_type: Mapped[str] = mapped_column(String(50), default="customer")  # customer, supplier, both
     gstin: Mapped[str] = mapped_column(String(20), nullable=True, index=True)
     pan: Mapped[str] = mapped_column(String(20), nullable=True)
+    industry: Mapped[str] = mapped_column(String(100), nullable=True)
+    website: Mapped[str] = mapped_column(String(255), nullable=True)
+    aadhar_no: Mapped[str] = mapped_column(String(20), nullable=True)
+    opening_balance: Mapped[float] = mapped_column(Float, default=0)
+    bank_details: Mapped[str] = mapped_column(Text, nullable=True)
+    notes: Mapped[str] = mapped_column(Text, nullable=True)
+    
     email: Mapped[str] = mapped_column(String(255), nullable=True)
     phone: Mapped[str] = mapped_column(String(50), nullable=True)
     mobile: Mapped[str] = mapped_column(String(50), nullable=True)
+    
+    # Billing Address
     billing_address: Mapped[str] = mapped_column(Text, nullable=True)
+    billing_city: Mapped[str] = mapped_column(String(100), nullable=True)
+    billing_state: Mapped[str] = mapped_column(String(100), nullable=True)
+    billing_pincode: Mapped[str] = mapped_column(String(20), nullable=True)
+    billing_country: Mapped[str] = mapped_column(String(100), default="India")
+    
+    # Shipping Address
     shipping_address: Mapped[str] = mapped_column(Text, nullable=True)
     city: Mapped[str] = mapped_column(String(100), nullable=True)
     state: Mapped[str] = mapped_column(String(100), nullable=True)
     country: Mapped[str] = mapped_column(String(100), default="India")
     pincode: Mapped[str] = mapped_column(String(20), nullable=True)
+    
+    # Credit Terms
     credit_limit: Mapped[float] = mapped_column(Float, default=0)
     credit_days: Mapped[int] = mapped_column(Integer, default=30)
     payment_terms: Mapped[str] = mapped_column(String(255), nullable=True)
+    credit_control: Mapped[str] = mapped_column(String(50), default="warning")
+    
+    # Balances (calculated)
+    receivable_amount: Mapped[float] = mapped_column(Float, default=0)
+    payable_amount: Mapped[float] = mapped_column(Float, default=0)
+    
     assigned_to: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     custom_fields: Mapped[dict] = mapped_column(JSONB, nullable=True)
