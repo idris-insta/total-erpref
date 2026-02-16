@@ -2,7 +2,7 @@
  * CRM API Service
  * V1 Layered Architecture endpoints for CRM module
  */
-import v1Api from '../index';
+import { v1Api } from './client';
 
 export const crmApi = {
   // Leads

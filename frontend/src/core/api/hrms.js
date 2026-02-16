@@ -2,7 +2,7 @@
  * HRMS API Service
  * V1 Layered Architecture endpoints for HRMS module
  */
-import v1Api from '../index';
+import { v1Api } from './client';
 
 export const hrmsApi = {
   // Employees
