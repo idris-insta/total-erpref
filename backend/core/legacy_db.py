@@ -179,6 +179,23 @@ class LegacyCollection:
     def __init__(self, model):
         self.model = model
     
+    def _convert_datetime_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert datetime string fields to datetime objects"""
+        from sqlalchemy import DateTime
+        
+        for col in self.model.__table__.columns:
+            if col.name in data:
+                val = data[col.name]
+                if isinstance(col.type, DateTime) and isinstance(val, str):
+                    try:
+                        if 'T' in val:
+                            data[col.name] = datetime.fromisoformat(val.replace('Z', '+00:00'))
+                        else:
+                            data[col.name] = datetime.strptime(val, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        pass  # Keep the original value if conversion fails
+        return data
+    
     async def find_one(self, query: Dict[str, Any] = None, projection: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
         """Find a single document"""
         async with async_session_factory() as session:
@@ -209,6 +226,9 @@ class LegacyCollection:
             # Filter out keys that don't exist in the model
             valid_keys = {c.name for c in self.model.__table__.columns}
             filtered_doc = {k: v for k, v in document.items() if k in valid_keys}
+            
+            # Convert datetime string fields
+            filtered_doc = self._convert_datetime_fields(filtered_doc)
             
             obj = self.model(**filtered_doc)
             session.add(obj)
