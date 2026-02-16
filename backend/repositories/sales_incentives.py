@@ -1,16 +1,17 @@
 """
-Sales Incentives Repositories - Data Access Layer for Sales Incentives module
+Sales Incentives Repositories - Data Access Layer for Sales Incentives module (PostgreSQL/SQLAlchemy)
 """
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 
 from repositories.base import BaseRepository
-from core.database import db
+from models.entities.other import SalesTarget, IncentiveSlab, IncentivePayout, SalesAchievement
+from core.database import async_session_factory
 
 
-class SalesTargetRepository(BaseRepository):
+class SalesTargetRepository(BaseRepository[SalesTarget]):
     """Repository for Sales Target operations"""
-    collection_name = "sales_targets"
+    model = SalesTarget
     
     async def get_by_employee(self, employee_id: str) -> List[Dict[str, Any]]:
         """Get targets for an employee"""
@@ -37,9 +38,9 @@ class SalesTargetRepository(BaseRepository):
         })
 
 
-class IncentiveSlabRepository(BaseRepository):
+class IncentiveSlabRepository(BaseRepository[IncentiveSlab]):
     """Repository for Incentive Slab operations"""
-    collection_name = "incentive_slabs"
+    model = IncentiveSlab
     
     async def get_active_slabs(self) -> List[Dict[str, Any]]:
         """Get active slabs"""
@@ -54,9 +55,9 @@ class IncentiveSlabRepository(BaseRepository):
         return None
 
 
-class IncentivePayoutRepository(BaseRepository):
+class IncentivePayoutRepository(BaseRepository[IncentivePayout]):
     """Repository for Incentive Payout operations"""
-    collection_name = "incentive_payouts"
+    model = IncentivePayout
     
     async def get_by_employee(self, employee_id: str) -> List[Dict[str, Any]]:
         """Get payouts for an employee"""
@@ -79,9 +80,9 @@ class IncentivePayoutRepository(BaseRepository):
         return await self.get_all({'status': 'approved'})
 
 
-class SalesAchievementRepository(BaseRepository):
+class SalesAchievementRepository(BaseRepository[SalesAchievement]):
     """Repository for Sales Achievement tracking"""
-    collection_name = "sales_achievements"
+    model = SalesAchievement
     
     async def get_by_employee_and_period(self, employee_id: str, period: str) -> Optional[Dict[str, Any]]:
         """Get achievement for employee in period"""
@@ -89,8 +90,8 @@ class SalesAchievementRepository(BaseRepository):
     
     async def get_leaderboard(self, period: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get top achievers for a period"""
-        achievements = await self.get_all({'period': period})
-        return sorted(achievements, key=lambda x: x.get('achievement_percent', 0), reverse=True)[:limit]
+        achievements = await self.get_all({'period': period}, sort_by='achievement_percent', sort_order=-1, limit=limit)
+        return achievements
 
 
 # Repository instances
