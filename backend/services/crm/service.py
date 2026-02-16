@@ -296,7 +296,7 @@ class SampleService:
     
     async def update_status(self, sample_id: str, status: str, user_id: str) -> Dict[str, Any]:
         """Update sample status"""
-        sample = await self.repo.get_by_id_or_raise(sample_id, "Sample")
+        await self.repo.get_by_id_or_raise(sample_id, "Sample")
         return await self.repo.update(sample_id, {'status': status}, user_id)
     
     async def record_feedback(self, sample_id: str, feedback: str, status: str, user_id: str) -> Dict[str, Any]:
