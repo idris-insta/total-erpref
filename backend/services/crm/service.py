@@ -4,14 +4,14 @@ CRM Services - Business Logic Layer for CRM module
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 
-from ...repositories.crm import (
+from repositories.crm import (
     lead_repository,
     account_repository,
     quotation_repository,
     sample_repository
 )
-from ...core.exceptions import NotFoundError, ValidationError, DuplicateError
-from ...core.database import db
+from core.exceptions import NotFoundError, ValidationError, DuplicateError
+from core.database import db
 
 
 class LeadService:

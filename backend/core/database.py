@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from typing import Optional
 import logging
 
-from .config import settings
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 

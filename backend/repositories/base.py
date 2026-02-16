@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 import uuid
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from ..core.database import db
-from ..core.exceptions import NotFoundError, DuplicateError
+from core.database import db
+from core.exceptions import NotFoundError, DuplicateError
 
 T = TypeVar('T')
 

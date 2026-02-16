@@ -9,8 +9,8 @@ from typing import Optional, Dict, Any
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from .config import settings
-from .database import db
+from core.config import settings
+from core.database import db
 
 security = HTTPBearer()
 
