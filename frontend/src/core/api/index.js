@@ -1,4 +1,14 @@
 /**
  * Core API Module Exports
+ * Provides access to both legacy API and new V1 layered architecture APIs
  */
-export { default as apiClient, setAuthToken, clearAuthToken, getAuthToken } from './client';
+export { default as apiClient, v1Api, setAuthToken, clearAuthToken, getAuthToken } from './client';
+
+// V1 API Module Services
+export { crmApi } from './crm';
+export { inventoryApi } from './inventory';
+export { productionApi } from './production';
+export { accountsApi } from './accounts';
+export { hrmsApi } from './hrms';
+export { procurementApi } from './procurement';
+
