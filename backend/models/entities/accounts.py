@@ -16,9 +16,11 @@ class Invoice(Base, UUIDMixin, TimestampMixin):
     invoice_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     invoice_type: Mapped[str] = mapped_column(String(50), default="Sales", index=True)  # Sales, Purchase, Credit Note, Debit Note
     account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), nullable=True, index=True)
+    order_id: Mapped[str] = mapped_column(String(36), nullable=True)  # Linked order
     invoice_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="draft", index=True)  # draft, sent, partial, paid, overdue, cancelled
+    payment_terms: Mapped[str] = mapped_column(String(255), nullable=True)
     
     # Addresses
     billing_address: Mapped[str] = mapped_column(Text, nullable=True)
@@ -37,6 +39,8 @@ class Invoice(Base, UUIDMixin, TimestampMixin):
     igst_amount: Mapped[float] = mapped_column(Float, default=0)
     cess_amount: Mapped[float] = mapped_column(Float, default=0)
     tax_amount: Mapped[float] = mapped_column(Float, default=0)
+    total_tax: Mapped[float] = mapped_column(Float, default=0)  # Alias for tax_amount
+    grand_total: Mapped[float] = mapped_column(Float, default=0)  # Alias for total_amount
     round_off: Mapped[float] = mapped_column(Float, default=0)
     total_amount: Mapped[float] = mapped_column(Float, default=0)
     paid_amount: Mapped[float] = mapped_column(Float, default=0)
@@ -46,6 +50,7 @@ class Invoice(Base, UUIDMixin, TimestampMixin):
     quotation_id: Mapped[str] = mapped_column(String(36), ForeignKey("quotations.id"), nullable=True)
     sales_order_id: Mapped[str] = mapped_column(String(36), nullable=True)
     po_number: Mapped[str] = mapped_column(String(100), nullable=True)  # Customer's PO
+    notes: Mapped[str] = mapped_column(Text, nullable=True)
     
     # GST Details
     place_of_supply: Mapped[str] = mapped_column(String(100), nullable=True)
