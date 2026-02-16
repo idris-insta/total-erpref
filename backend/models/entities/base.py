@@ -65,13 +65,17 @@ class Lead(Base, UUIDMixin, TimestampMixin):
     source: Mapped[str] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="new", index=True)
     industry: Mapped[str] = mapped_column(String(100), nullable=True)
+    customer_type: Mapped[str] = mapped_column(String(100), nullable=True)
     expected_value: Mapped[float] = mapped_column(Float, nullable=True)
-    estimated_value: Mapped[float] = mapped_column(Float, nullable=True)  # Alias for expected_value
+    estimated_value: Mapped[float] = mapped_column(Float, nullable=True)
     probability: Mapped[int] = mapped_column(Integer, nullable=True)
     assigned_to: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=True, index=True)
     notes: Mapped[str] = mapped_column(Text, nullable=True)
     custom_fields: Mapped[dict] = mapped_column(JSONB, nullable=True)
     next_followup_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_follow_up: Mapped[str] = mapped_column(String(255), nullable=True)
+    follow_up_activity: Mapped[str] = mapped_column(String(255), nullable=True)
+    products_of_interest: Mapped[list] = mapped_column(JSONB, nullable=True)
     lost_reason: Mapped[str] = mapped_column(String(255), nullable=True)
 
 
