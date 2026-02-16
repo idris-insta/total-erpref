@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 import uuid
 import os
-from motor.motor_asyncio import AsyncIOMotorClient
+from core.legacy_db import db
 
 router = APIRouter()
 
