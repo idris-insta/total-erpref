@@ -1,16 +1,18 @@
 """
-HRMS Repositories - Data Access Layer for HRMS module
+HRMS Repositories - Data Access Layer for HRMS module (PostgreSQL/SQLAlchemy)
 """
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
+from sqlalchemy import select, and_
 
 from repositories.base import BaseRepository
-from core.database import db
+from models.entities.hrms import Employee, Attendance, LeaveRequest, LeaveType, SalaryStructure, Payroll, Loan, Holiday
+from core.database import async_session_factory
 
 
-class EmployeeRepository(BaseRepository):
+class EmployeeRepository(BaseRepository[Employee]):
     """Repository for Employee operations"""
-    collection_name = "employees"
+    model = Employee
     
     async def get_by_department(self, department: str) -> List[Dict[str, Any]]:
         """Get employees by department"""
@@ -26,18 +28,12 @@ class EmployeeRepository(BaseRepository):
     
     async def search(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
         """Search employees by name, code, or email"""
-        return await self.get_all({
-            '$or': [
-                {'name': {'$regex': query, '$options': 'i'}},
-                {'employee_code': {'$regex': query, '$options': 'i'}},
-                {'email': {'$regex': query, '$options': 'i'}}
-            ]
-        }, limit=limit)
+        return await super().search(query, ['name', 'employee_code', 'email'], limit)
 
 
-class AttendanceRepository(BaseRepository):
+class AttendanceRepository(BaseRepository[Attendance]):
     """Repository for Attendance operations"""
-    collection_name = "attendance"
+    model = Attendance
     
     async def get_by_employee(self, employee_id: str) -> List[Dict[str, Any]]:
         """Get attendance records for an employee"""
@@ -53,11 +49,17 @@ class AttendanceRepository(BaseRepository):
     
     async def get_monthly_summary(self, employee_id: str, year: int, month: int) -> Dict[str, Any]:
         """Get monthly attendance summary for an employee"""
-        month_str = f"{year}-{month:02d}"
-        records = await self.get_all({
-            'employee_id': employee_id,
-            'date': {'$regex': f'^{month_str}'}
-        })
+        async with async_session_factory() as session:
+            month_str = f"{year}-{month:02d}"
+            result = await session.execute(
+                select(Attendance).where(
+                    and_(
+                        Attendance.employee_id == employee_id,
+                        Attendance.date.cast(str).like(f'{month_str}%')
+                    )
+                )
+            )
+            records = [self._to_dict(obj) for obj in result.scalars().all()]
         
         present = len([r for r in records if r.get('status') == 'present'])
         absent = len([r for r in records if r.get('status') == 'absent'])
@@ -76,9 +78,9 @@ class AttendanceRepository(BaseRepository):
         }
 
 
-class LeaveRequestRepository(BaseRepository):
+class LeaveRequestRepository(BaseRepository[LeaveRequest]):
     """Repository for Leave Request operations"""
-    collection_name = "leave_requests"
+    model = LeaveRequest
     
     async def get_by_employee(self, employee_id: str) -> List[Dict[str, Any]]:
         """Get leave requests for an employee"""
@@ -93,9 +95,27 @@ class LeaveRequestRepository(BaseRepository):
         return await self.get_by_status('pending')
 
 
-class PayrollRepository(BaseRepository):
+class LeaveTypeRepository(BaseRepository[LeaveType]):
+    """Repository for Leave Type operations"""
+    model = LeaveType
+    
+    async def get_active(self) -> List[Dict[str, Any]]:
+        """Get active leave types"""
+        return await self.get_all({'is_active': True})
+
+
+class SalaryStructureRepository(BaseRepository[SalaryStructure]):
+    """Repository for Salary Structure operations"""
+    model = SalaryStructure
+    
+    async def get_active(self) -> List[Dict[str, Any]]:
+        """Get active salary structures"""
+        return await self.get_all({'is_active': True})
+
+
+class PayrollRepository(BaseRepository[Payroll]):
     """Repository for Payroll operations"""
-    collection_name = "payroll"
+    model = Payroll
     
     async def get_by_employee(self, employee_id: str) -> List[Dict[str, Any]]:
         """Get payroll records for an employee"""
@@ -110,8 +130,34 @@ class PayrollRepository(BaseRepository):
         return await self.get_one({'employee_id': employee_id, 'year': year, 'month': month})
 
 
+class LoanRepository(BaseRepository[Loan]):
+    """Repository for Loan operations"""
+    model = Loan
+    
+    async def get_by_employee(self, employee_id: str) -> List[Dict[str, Any]]:
+        """Get loans for an employee"""
+        return await self.get_all({'employee_id': employee_id})
+    
+    async def get_active_loans(self) -> List[Dict[str, Any]]:
+        """Get all active loans"""
+        return await self.get_all({'status': 'active'})
+
+
+class HolidayRepository(BaseRepository[Holiday]):
+    """Repository for Holiday operations"""
+    model = Holiday
+    
+    async def get_by_year(self, year: int) -> List[Dict[str, Any]]:
+        """Get holidays for a year"""
+        return await self.get_all({'year': year})
+
+
 # Repository instances
 employee_repository = EmployeeRepository()
 attendance_repository = AttendanceRepository()
 leave_request_repository = LeaveRequestRepository()
+leave_type_repository = LeaveTypeRepository()
+salary_structure_repository = SalaryStructureRepository()
 payroll_repository = PayrollRepository()
+loan_repository = LoanRepository()
+holiday_repository = HolidayRepository()
