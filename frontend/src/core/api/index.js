@@ -11,4 +11,7 @@ export { productionApi } from './production';
 export { accountsApi } from './accounts';
 export { hrmsApi } from './hrms';
 export { procurementApi } from './procurement';
+export { qualityApi } from './quality';
+export { salesIncentivesApi } from './salesIncentives';
+export { settingsApi } from './settings';
 
