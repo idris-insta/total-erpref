@@ -185,12 +185,44 @@ class BaseRepository(Generic[T]):
             query = select(func.count()).select_from(self.model)
             
             if filters:
-                conditions = [getattr(self.model, k) == v for k, v in filters.items() if hasattr(self.model, k)]
+                conditions = self._build_conditions(filters)
                 if conditions:
                     query = query.where(and_(*conditions))
             
             result = await session.execute(query)
             return result.scalar()
+    
+    def _build_conditions(self, filters: Dict[str, Any]) -> List:
+        """Build SQLAlchemy conditions from MongoDB-like filters"""
+        conditions = []
+        for key, value in filters.items():
+            if hasattr(self.model, key):
+                col = getattr(self.model, key)
+                if isinstance(value, dict):
+                    # Handle operators like $in, $ne, etc.
+                    if '$in' in value:
+                        conditions.append(col.in_(value['$in']))
+                    elif '$nin' in value:
+                        conditions.append(~col.in_(value['$nin']))
+                    elif '$ne' in value:
+                        conditions.append(col != value['$ne'])
+                    elif '$lt' in value:
+                        conditions.append(col < value['$lt'])
+                    elif '$lte' in value:
+                        conditions.append(col <= value['$lte'])
+                    elif '$gt' in value:
+                        conditions.append(col > value['$gt'])
+                    elif '$gte' in value:
+                        conditions.append(col >= value['$gte'])
+                    elif '$regex' in value:
+                        pattern = value['$regex']
+                        if value.get('$options', '') == 'i':
+                            conditions.append(col.ilike(f'%{pattern}%'))
+                        else:
+                            conditions.append(col.like(f'%{pattern}%'))
+                else:
+                    conditions.append(col == value)
+        return conditions
     
     async def exists(self, filters: Dict[str, Any]) -> bool:
         """Check if a record exists"""
