@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     DB_NAME: str = "instabiz"
     
     # Security
-    JWT_SECRET: str = "your-secret-key-change-in-production"
+    JWT_SECRET: str = "adhesive-erp-secret-key-change-in-production"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
     
