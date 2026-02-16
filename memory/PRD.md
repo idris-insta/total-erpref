@@ -2089,3 +2089,98 @@ Added 25+ optional stage-specific fields for detailed data capture.
 
 ---
 
+
+---
+
+## Architectural Refactoring - Layered Architecture (February 2026) ✅ IN PROGRESS
+
+### Overview
+Major architectural refactoring from monolithic structure to a modular, layered architecture following clean code principles.
+
+### New Architecture Pattern
+```
+Repository Layer → Service Layer → API Layer
+   (Data Access)    (Business Logic)    (HTTP Routes)
+```
+
+### Directory Structure (Backend)
+```
+/app/backend/
+├── api/                    # API Layer (Routes)
+│   └── v1/
+│       ├── crm/            # CRM routes (leads, accounts, quotations, samples)
+│       ├── inventory/      # Inventory routes (items, warehouses, transfers, adjustments)
+│       └── production/     # Production routes (machines, order-sheets, work-orders)
+├── services/               # Business Logic Layer
+│   ├── crm/service.py      # CRM services (LeadService, AccountService, etc.)
+│   ├── inventory/service.py # Inventory services (ItemService, WarehouseService, etc.)
+│   └── production/service.py # Production services (MachineService, WorkOrderService, etc.)
+├── repositories/           # Data Access Layer
+│   ├── base.py             # BaseRepository with CRUD operations
+│   ├── crm.py              # CRM repositories
+│   ├── inventory.py        # Inventory repositories
+│   └── production.py       # Production repositories
+├── models/                 # Pydantic Models
+│   └── schemas/
+│       ├── crm.py          # CRM schemas (LeadCreate, AccountResponse, etc.)
+│       ├── inventory.py    # Inventory schemas
+│       └── production.py   # Production schemas
+└── core/                   # Core utilities
+    ├── config.py           # Settings/configuration
+    ├── database.py         # MongoDB connection
+    ├── security.py         # JWT auth, password hashing
+    └── exceptions.py       # Custom exceptions
+```
+
+### v1 API Endpoints (New Layered Architecture)
+
+**CRM Module:**
+- `GET /api/v1/crm/leads` - List leads
+- `GET /api/v1/crm/leads/kanban/view` - Kanban view
+- `POST /api/v1/crm/leads` - Create lead
+- `PUT /api/v1/crm/leads/{id}` - Update lead
+- `DELETE /api/v1/crm/leads/{id}` - Delete lead
+- `GET /api/v1/crm/accounts` - List accounts
+- `GET /api/v1/crm/quotations` - List quotations
+- `GET /api/v1/crm/samples` - List samples
+
+**Inventory Module:**
+- `GET /api/v1/inventory/items` - List items
+- `GET /api/v1/inventory/items/low-stock` - Low stock alerts
+- `GET /api/v1/inventory/warehouses` - List warehouses
+- `GET /api/v1/inventory/transfers` - List transfers
+- `GET /api/v1/inventory/adjustments` - List adjustments
+
+**Production Module:**
+- `GET /api/v1/production/machines` - List machines
+- `GET /api/v1/production/machines/available` - Available machines
+- `GET /api/v1/production/order-sheets` - List order sheets
+- `GET /api/v1/production/work-orders` - List work orders
+- `GET /api/v1/production/work-orders/in-progress` - In-progress work orders
+
+### Testing Results (Iteration 24)
+- **Backend:** 100% (21/21 tests passed)
+- **Frontend:** 100% (Dashboard and login verified)
+- **Test File:** `/app/backend/tests/test_v1_layered_api.py`
+
+### Backward Compatibility
+- Legacy routes at `/api/{module}` still functional
+- New v1 routes at `/api/v1/{module}` use layered architecture
+- Frontend continues to use legacy routes (migration planned)
+
+### Next Steps for Refactoring
+1. Migrate Accounts module to layered architecture
+2. Migrate HRMS module to layered architecture
+3. Migrate Procurement module to layered architecture
+4. Update frontend to use v1 API endpoints
+5. Deprecate legacy routes after frontend migration
+
+---
+
+## Login Credentials
+- **Email:** admin@instabiz.com
+- **Password:** adminpassword
+
+---
+
+## Last Updated: February 16, 2026
