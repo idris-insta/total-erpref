@@ -147,6 +147,9 @@ from routes import production_stages
 from api.v1.crm import router as crm_v1_router
 from api.v1.inventory import router as inventory_v1_router
 from api.v1.production import router as production_v1_router
+from api.v1.accounts import router as accounts_v1_router
+from api.v1.hrms import router as hrms_v1_router
+from api.v1.procurement import router as procurement_v1_router
 
 api_router.include_router(crm.router, prefix="/crm", tags=["CRM"])
 # NEW: Add v1 versioned CRM routes
@@ -155,6 +158,12 @@ api_router.include_router(crm_v1_router, prefix="/v1", tags=["CRM v1 - Layered A
 api_router.include_router(inventory_v1_router, prefix="/v1", tags=["Inventory v1 - Layered Architecture"])
 # NEW: Add v1 versioned Production routes
 api_router.include_router(production_v1_router, prefix="/v1", tags=["Production v1 - Layered Architecture"])
+# NEW: Add v1 versioned Accounts routes
+api_router.include_router(accounts_v1_router, prefix="/v1", tags=["Accounts v1 - Layered Architecture"])
+# NEW: Add v1 versioned HRMS routes
+api_router.include_router(hrms_v1_router, prefix="/v1", tags=["HRMS v1 - Layered Architecture"])
+# NEW: Add v1 versioned Procurement routes
+api_router.include_router(procurement_v1_router, prefix="/v1", tags=["Procurement v1 - Layered Architecture"])
 api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
 api_router.include_router(production.router, prefix="/production", tags=["Production"])
 api_router.include_router(procurement.router, prefix="/procurement", tags=["Procurement"])
