@@ -28,7 +28,7 @@ class InvoiceRepository(BaseRepository[Invoice]):
     
     async def get_overdue(self) -> List[Dict[str, Any]]:
         """Get overdue invoices"""
-        today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        today = datetime.now(timezone.utc)
         async with async_session_factory() as session:
             result = await session.execute(
                 select(Invoice).where(
