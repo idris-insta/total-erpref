@@ -5,9 +5,9 @@ API endpoints for Lead management
 from fastapi import APIRouter, Depends, Query
 from typing import Optional, List
 
-from ....core.security import get_current_user
-from ....services.crm.service import lead_service
-from ....models.schemas.crm import LeadCreate, LeadUpdate, LeadResponse
+from core.security import get_current_user
+from services.crm.service import lead_service
+from models.schemas.crm import LeadCreate, LeadUpdate, LeadResponse
 
 router = APIRouter(prefix="/leads", tags=["CRM - Leads"])
 

@@ -5,9 +5,9 @@ API endpoints for Sample management
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 
-from ....core.security import get_current_user
-from ....services.crm.service import sample_service
-from ....models.schemas.crm import SampleCreate, SampleUpdate
+from core.security import get_current_user
+from services.crm.service import sample_service
+from models.schemas.crm import SampleCreate, SampleUpdate
 
 router = APIRouter(prefix="/samples", tags=["CRM - Samples"])
 

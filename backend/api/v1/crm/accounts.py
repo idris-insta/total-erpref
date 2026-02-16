@@ -5,9 +5,9 @@ API endpoints for Account management
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 
-from ....core.security import get_current_user
-from ....services.crm.service import account_service
-from ....models.schemas.crm import AccountCreate, AccountUpdate
+from core.security import get_current_user
+from services.crm.service import account_service
+from models.schemas.crm import AccountCreate, AccountUpdate
 
 router = APIRouter(prefix="/accounts", tags=["CRM - Accounts"])
 
