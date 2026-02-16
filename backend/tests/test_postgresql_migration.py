@@ -75,17 +75,21 @@ class TestDashboard:
         assert response.status_code == 200, f"Dashboard overview failed: {response.text}"
         data = response.json()
         
-        # Verify response structure
-        expected_keys = [
-            "total_revenue", "monthly_revenue", "active_leads", 
-            "total_customers", "work_orders", "low_stock_items"
-        ]
-        for key in expected_keys:
-            assert key in data, f"Missing key '{key}' in dashboard response"
+        # Verify response structure (actual structure from routes/dashboard.py)
+        expected_sections = ["crm", "revenue", "inventory", "production", "hrms", "quality"]
+        for section in expected_sections:
+            assert section in data, f"Missing section '{section}' in dashboard response"
             
+        # Verify CRM section
+        assert "leads" in data["crm"]
+        assert "quotations" in data["crm"]
+        
+        # Verify revenue section
+        assert "total_billed" in data["revenue"]
+        
         # Verify values are numbers
-        assert isinstance(data["total_revenue"], (int, float))
-        assert isinstance(data["active_leads"], int)
+        assert isinstance(data["crm"]["leads"], (int, float))
+        assert isinstance(data["revenue"]["total_billed"], (int, float))
 
 
 class TestCRMLeadsV1:
