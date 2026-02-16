@@ -17,9 +17,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
     
-    # Database
-    MONGO_URL: str = "mongodb://localhost:27017"
-    DB_NAME: str = "instabiz"
+    # Database - PostgreSQL
+    DATABASE_URL: str = "postgresql+asyncpg://erp_user:erp_secure_password@localhost:5432/adhesive_erp"
     
     # Security
     JWT_SECRET: str = "adhesive-erp-secret-key-change-in-production"
