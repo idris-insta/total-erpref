@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from typing import Optional
 
 from ....core.security import get_current_user
-from ....services.crm import quotation_service
+from ....services.crm.service import quotation_service
 from ....models.schemas.crm import QuotationCreate, QuotationUpdate
 
 router = APIRouter(prefix="/quotations", tags=["CRM - Quotations"])

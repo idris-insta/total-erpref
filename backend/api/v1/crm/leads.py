@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from typing import Optional, List
 
 from ....core.security import get_current_user
-from ....services.crm import lead_service
+from ....services.crm.service import lead_service
 from ....models.schemas.crm import LeadCreate, LeadUpdate, LeadResponse
 
 router = APIRouter(prefix="/leads", tags=["CRM - Leads"])
