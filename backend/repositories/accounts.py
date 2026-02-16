@@ -1,16 +1,18 @@
 """
-Accounts Repositories - Data Access Layer for Accounts module
+Accounts Repositories - Data Access Layer for Accounts module (PostgreSQL/SQLAlchemy)
 """
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
+from sqlalchemy import select, and_, func
 
 from repositories.base import BaseRepository
-from core.database import db
+from models.entities.accounts import Invoice, Payment, JournalEntry, ChartOfAccounts, Ledger, LedgerGroup, LedgerEntry, Expense
+from core.database import async_session_factory
 
 
-class InvoiceRepository(BaseRepository):
+class InvoiceRepository(BaseRepository[Invoice]):
     """Repository for Invoice operations"""
-    collection_name = "invoices"
+    model = Invoice
     
     async def get_by_type(self, invoice_type: str) -> List[Dict[str, Any]]:
         """Get invoices by type (Sales, Purchase, Credit Note, Debit Note)"""
@@ -27,10 +29,16 @@ class InvoiceRepository(BaseRepository):
     async def get_overdue(self) -> List[Dict[str, Any]]:
         """Get overdue invoices"""
         today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        return await self.get_all({
-            'status': {'$in': ['sent', 'partial']},
-            'due_date': {'$lt': today}
-        })
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(Invoice).where(
+                    and_(
+                        Invoice.status.in_(['sent', 'partial']),
+                        Invoice.due_date < today
+                    )
+                )
+            )
+            return [self._to_dict(obj) for obj in result.scalars().all()]
     
     async def generate_invoice_number(self, invoice_type: str = "Sales") -> str:
         """Generate unique invoice number"""
@@ -40,17 +48,21 @@ class InvoiceRepository(BaseRepository):
     
     async def get_pending_amount(self, account_id: str) -> float:
         """Get total pending amount for an account"""
-        pipeline = [
-            {'$match': {'account_id': account_id, 'status': {'$in': ['sent', 'partial', 'overdue']}}},
-            {'$group': {'_id': None, 'total': {'$sum': '$balance_amount'}}}
-        ]
-        result = await self.aggregate(pipeline)
-        return result[0]['total'] if result else 0
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(func.sum(Invoice.balance_amount)).where(
+                    and_(
+                        Invoice.account_id == account_id,
+                        Invoice.status.in_(['sent', 'partial', 'overdue'])
+                    )
+                )
+            )
+            return result.scalar() or 0
 
 
-class PaymentRepository(BaseRepository):
+class PaymentRepository(BaseRepository[Payment]):
     """Repository for Payment operations"""
-    collection_name = "payments"
+    model = Payment
     
     async def get_by_type(self, payment_type: str) -> List[Dict[str, Any]]:
         """Get payments by type (receipt, payment)"""
@@ -67,15 +79,22 @@ class PaymentRepository(BaseRepository):
         return f"{prefix}-{datetime.now().strftime('%Y%m')}-{count + 1:04d}"
 
 
-class JournalEntryRepository(BaseRepository):
+class JournalEntryRepository(BaseRepository[JournalEntry]):
     """Repository for Journal Entry operations"""
-    collection_name = "journal_entries"
+    model = JournalEntry
     
     async def get_by_date_range(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
         """Get journal entries within date range"""
-        return await self.get_all({
-            'entry_date': {'$gte': start_date, '$lte': end_date}
-        })
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(JournalEntry).where(
+                    and_(
+                        JournalEntry.entry_date >= start_date,
+                        JournalEntry.entry_date <= end_date
+                    )
+                )
+            )
+            return [self._to_dict(obj) for obj in result.scalars().all()]
     
     async def generate_entry_number(self) -> str:
         """Generate unique journal entry number"""
@@ -83,9 +102,9 @@ class JournalEntryRepository(BaseRepository):
         return f"JE-{datetime.now().strftime('%Y%m')}-{count + 1:04d}"
 
 
-class ChartOfAccountsRepository(BaseRepository):
+class ChartOfAccountsRepository(BaseRepository[ChartOfAccounts]):
     """Repository for Chart of Accounts operations"""
-    collection_name = "chart_of_accounts"
+    model = ChartOfAccounts
     
     async def get_by_type(self, account_type: str) -> List[Dict[str, Any]]:
         """Get accounts by type (Asset, Liability, Equity, Revenue, Expense)"""
@@ -96,8 +115,68 @@ class ChartOfAccountsRepository(BaseRepository):
         return await self.get_all({'parent_id': parent_id})
 
 
+class LedgerRepository(BaseRepository[Ledger]):
+    """Repository for Ledger operations"""
+    model = Ledger
+    
+    async def get_by_group(self, group_id: str) -> List[Dict[str, Any]]:
+        """Get ledgers by group"""
+        return await self.get_all({'ledger_group_id': group_id})
+    
+    async def get_by_account(self, account_id: str) -> Optional[Dict[str, Any]]:
+        """Get ledger linked to an account"""
+        return await self.get_one({'account_id': account_id})
+
+
+class LedgerGroupRepository(BaseRepository[LedgerGroup]):
+    """Repository for Ledger Group operations"""
+    model = LedgerGroup
+    
+    async def get_by_parent(self, parent_id: str) -> List[Dict[str, Any]]:
+        """Get child groups"""
+        return await self.get_all({'parent_id': parent_id})
+    
+    async def get_primary_groups(self) -> List[Dict[str, Any]]:
+        """Get primary groups"""
+        return await self.get_all({'is_primary': True})
+
+
+class LedgerEntryRepository(BaseRepository[LedgerEntry]):
+    """Repository for Ledger Entry operations"""
+    model = LedgerEntry
+    
+    async def get_by_ledger(self, ledger_id: str) -> List[Dict[str, Any]]:
+        """Get entries for a ledger"""
+        return await self.get_all({'ledger_id': ledger_id}, sort_by='entry_date')
+    
+    async def get_by_voucher(self, voucher_number: str) -> List[Dict[str, Any]]:
+        """Get entries for a voucher"""
+        return await self.get_all({'voucher_number': voucher_number})
+
+
+class ExpenseRepository(BaseRepository[Expense]):
+    """Repository for Expense operations"""
+    model = Expense
+    
+    async def get_by_category(self, category: str) -> List[Dict[str, Any]]:
+        """Get expenses by category"""
+        return await self.get_all({'category': category})
+    
+    async def get_by_status(self, status: str) -> List[Dict[str, Any]]:
+        """Get expenses by status"""
+        return await self.get_all({'status': status})
+    
+    async def get_pending_approval(self) -> List[Dict[str, Any]]:
+        """Get expenses pending approval"""
+        return await self.get_all({'status': 'pending'})
+
+
 # Repository instances
 invoice_repository = InvoiceRepository()
 payment_repository = PaymentRepository()
 journal_entry_repository = JournalEntryRepository()
 coa_repository = ChartOfAccountsRepository()
+ledger_repository = LedgerRepository()
+ledger_group_repository = LedgerGroupRepository()
+ledger_entry_repository = LedgerEntryRepository()
+expense_repository = ExpenseRepository()
