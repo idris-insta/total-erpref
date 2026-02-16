@@ -164,6 +164,23 @@ class BaseRepository(Generic[T]):
             result = await session.execute(query)
             return result.scalar()
     
+    def _convert_value(self, col, val):
+        """Convert value to appropriate type for column"""
+        from sqlalchemy import DateTime
+        
+        # If the column is a datetime column and the value is a string, convert it
+        if hasattr(col, 'type') and isinstance(col.type, DateTime):
+            if isinstance(val, str):
+                try:
+                    # Try ISO format
+                    if 'T' in val:
+                        return datetime.fromisoformat(val.replace('Z', '+00:00'))
+                    # Try date-only format
+                    return datetime.strptime(val, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                except ValueError:
+                    pass
+        return val
+    
     def _build_conditions(self, filters: Dict[str, Any]) -> List:
         """Build SQLAlchemy conditions from MongoDB-like filters"""
         conditions = []
@@ -172,26 +189,28 @@ class BaseRepository(Generic[T]):
                 col = getattr(self.model, key)
                 if isinstance(value, dict):
                     # Handle operators like $in, $ne, etc.
-                    if '$in' in value:
-                        conditions.append(col.in_(value['$in']))
-                    elif '$nin' in value:
-                        conditions.append(~col.in_(value['$nin']))
-                    elif '$ne' in value:
-                        conditions.append(col != value['$ne'])
-                    elif '$lt' in value:
-                        conditions.append(col < value['$lt'])
-                    elif '$lte' in value:
-                        conditions.append(col <= value['$lte'])
-                    elif '$gt' in value:
-                        conditions.append(col > value['$gt'])
-                    elif '$gte' in value:
-                        conditions.append(col >= value['$gte'])
-                    elif '$regex' in value:
-                        pattern = value['$regex']
-                        if value.get('$options', '') == 'i':
-                            conditions.append(col.ilike(f'%{pattern}%'))
-                        else:
-                            conditions.append(col.like(f'%{pattern}%'))
+                    for op, val in value.items():
+                        converted_val = self._convert_value(col, val)
+                        if op == '$in':
+                            conditions.append(col.in_(val))
+                        elif op == '$nin':
+                            conditions.append(~col.in_(val))
+                        elif op == '$ne':
+                            conditions.append(col != converted_val)
+                        elif op == '$lt':
+                            conditions.append(col < converted_val)
+                        elif op == '$lte':
+                            conditions.append(col <= converted_val)
+                        elif op == '$gt':
+                            conditions.append(col > converted_val)
+                        elif op == '$gte':
+                            conditions.append(col >= converted_val)
+                        elif op == '$regex':
+                            pattern = val
+                            if isinstance(value, dict) and value.get('$options', '') == 'i':
+                                conditions.append(col.ilike(f'%{pattern}%'))
+                            else:
+                                conditions.append(col.like(f'%{pattern}%'))
                 else:
                     conditions.append(col == value)
         return conditions
