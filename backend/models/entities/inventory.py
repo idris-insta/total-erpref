@@ -20,31 +20,54 @@ class Item(Base, UUIDMixin, TimestampMixin):
     sub_category: Mapped[str] = mapped_column(String(100), nullable=True)
     hsn_code: Mapped[str] = mapped_column(String(20), nullable=True, index=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
-    uom: Mapped[str] = mapped_column(String(50), default="Nos")  # Unit of Measurement
+    
+    # UOM
+    uom: Mapped[str] = mapped_column(String(50), default="Nos")
+    primary_uom: Mapped[str] = mapped_column(String(50), default="Pcs")
+    secondary_uom: Mapped[str] = mapped_column(String(50), nullable=True)
     alternate_uom: Mapped[str] = mapped_column(String(50), nullable=True)
     conversion_factor: Mapped[float] = mapped_column(Float, default=1)
     
     # Pricing
     purchase_price: Mapped[float] = mapped_column(Float, default=0)
+    cost_price: Mapped[float] = mapped_column(Float, nullable=True)
     selling_price: Mapped[float] = mapped_column(Float, default=0)
+    min_selling_price: Mapped[float] = mapped_column(Float, nullable=True)
+    margin_percent: Mapped[float] = mapped_column(Float, nullable=True)
     mrp: Mapped[float] = mapped_column(Float, nullable=True)
     
     # Stock
     stock_qty: Mapped[float] = mapped_column(Float, default=0)
+    stock_kg: Mapped[float] = mapped_column(Float, default=0)
+    stock_sqm: Mapped[float] = mapped_column(Float, default=0)
     reorder_level: Mapped[float] = mapped_column(Float, default=0)
     reorder_qty: Mapped[float] = mapped_column(Float, default=0)
+    safety_stock: Mapped[float] = mapped_column(Float, nullable=True)
     min_qty: Mapped[float] = mapped_column(Float, default=0)
     max_qty: Mapped[float] = mapped_column(Float, nullable=True)
+    lead_time_days: Mapped[int] = mapped_column(Integer, nullable=True)
+    shelf_life_days: Mapped[int] = mapped_column(Integer, nullable=True)
     
     # Tax
     gst_rate: Mapped[float] = mapped_column(Float, default=18)
     cess_rate: Mapped[float] = mapped_column(Float, default=0)
     
     # Physical attributes (for adhesive tapes)
+    base_material: Mapped[str] = mapped_column(String(100), nullable=True)
+    adhesive_type: Mapped[str] = mapped_column(String(100), nullable=True)
+    color: Mapped[str] = mapped_column(String(50), nullable=True)
     width: Mapped[float] = mapped_column(Float, nullable=True)
+    width_mm: Mapped[float] = mapped_column(Float, nullable=True)
     length: Mapped[float] = mapped_column(Float, nullable=True)
+    length_m: Mapped[float] = mapped_column(Float, nullable=True)
     thickness: Mapped[float] = mapped_column(Float, nullable=True)
+    thickness_microns: Mapped[float] = mapped_column(Float, nullable=True)
+    gsm: Mapped[float] = mapped_column(Float, nullable=True)
     core_diameter: Mapped[float] = mapped_column(Float, nullable=True)
+    
+    # Other
+    barcode: Mapped[str] = mapped_column(String(100), nullable=True)
+    notes: Mapped[str] = mapped_column(Text, nullable=True)
     
     # Flags
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
