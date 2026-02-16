@@ -1,16 +1,18 @@
 """
-Quality Repositories - Data Access Layer for Quality module
+Quality Repositories - Data Access Layer for Quality module (PostgreSQL/SQLAlchemy)
 """
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
+import uuid
 
 from repositories.base import BaseRepository
-from core.database import db
+from models.entities.other import QCInspection, QCParameter, CustomerComplaint, TDSDocument
+from core.database import async_session_factory
 
 
-class QCInspectionRepository(BaseRepository):
+class QCInspectionRepository(BaseRepository[QCInspection]):
     """Repository for QC Inspection operations"""
-    collection_name = "qc_inspections"
+    model = QCInspection
     
     async def get_by_type(self, inspection_type: str) -> List[Dict[str, Any]]:
         """Get inspections by type"""
@@ -34,13 +36,12 @@ class QCInspectionRepository(BaseRepository):
     
     async def generate_inspection_number(self) -> str:
         """Generate unique inspection number"""
-        import uuid
         return f"QC-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
 
 
-class CustomerComplaintRepository(BaseRepository):
+class CustomerComplaintRepository(BaseRepository[CustomerComplaint]):
     """Repository for Customer Complaint operations"""
-    collection_name = "customer_complaints"
+    model = CustomerComplaint
     
     async def get_by_account(self, account_id: str) -> List[Dict[str, Any]]:
         """Get complaints for an account"""
@@ -64,9 +65,9 @@ class CustomerComplaintRepository(BaseRepository):
         return f"CC-{datetime.now().strftime('%Y%m')}-{count + 1:04d}"
 
 
-class TDSRepository(BaseRepository):
+class TDSRepository(BaseRepository[TDSDocument]):
     """Repository for Technical Data Sheet operations"""
-    collection_name = "tds"
+    model = TDSDocument
     
     async def get_by_item(self, item_id: str) -> List[Dict[str, Any]]:
         """Get TDS documents for an item"""
@@ -74,15 +75,13 @@ class TDSRepository(BaseRepository):
     
     async def get_latest_by_item(self, item_id: str) -> Optional[Dict[str, Any]]:
         """Get the latest TDS for an item"""
-        docs = await self.get_all({'item_id': item_id})
-        if docs:
-            return sorted(docs, key=lambda x: x.get('created_at', ''), reverse=True)[0]
-        return None
+        docs = await self.get_all({'item_id': item_id}, sort_by='created_at', sort_order=-1, limit=1)
+        return docs[0] if docs else None
 
 
-class QCParameterRepository(BaseRepository):
+class QCParameterRepository(BaseRepository[QCParameter]):
     """Repository for QC Parameter Master operations"""
-    collection_name = "qc_parameters"
+    model = QCParameter
     
     async def get_by_category(self, category: str) -> List[Dict[str, Any]]:
         """Get parameters by category"""
