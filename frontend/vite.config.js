@@ -361,6 +361,7 @@ export default defineConfig({
       '.emergentagent.com',
       '.emergent.sh',
       'localhost',
+      'adhesive-powerhouse.cluster-6.preview.emergentcf.cloud',
     ],
     watch: {
       ignored: ['**/node_modules/**', '**/.git/**', '**/build/**', '**/dist/**', '**/coverage/**'],
