@@ -53,7 +53,7 @@ class SalesTargetService:
             data['period']
         )
         if existing:
-            raise BusinessRuleError(f"Target already exists for this employee and period")
+            raise BusinessRuleError("Target already exists for this employee and period")
         
         data['achieved_amount'] = 0
         data['achieved_quantity'] = 0
@@ -194,7 +194,7 @@ class IncentivePayoutService:
         payout = await self.repo.get_by_id_or_raise(payout_id, "Incentive Payout")
         
         if payout.get('status') != 'approved':
-            raise BusinessRuleError(f"Cannot mark as paid - payout must be approved first")
+            raise BusinessRuleError("Cannot mark as paid - payout must be approved first")
         
         return await self.repo.update(payout_id, {
             'status': 'paid',
