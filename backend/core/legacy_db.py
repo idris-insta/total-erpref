@@ -106,6 +106,24 @@ def _to_dict(obj) -> Dict[str, Any]:
     return result
 
 
+def _convert_value(col, val):
+    """Convert value to appropriate type for column"""
+    from sqlalchemy import DateTime
+    
+    # If the column is a datetime column and the value is a string, convert it
+    if hasattr(col, 'type') and isinstance(col.type, DateTime):
+        if isinstance(val, str):
+            try:
+                # Try ISO format
+                if 'T' in val:
+                    return datetime.fromisoformat(val.replace('Z', '+00:00'))
+                # Try date-only format
+                return datetime.strptime(val, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+            except ValueError:
+                pass
+    return val
+
+
 def _build_filters(model, query: Dict[str, Any]):
     """Build SQLAlchemy filter conditions from MongoDB-like query"""
     conditions = []
@@ -126,20 +144,21 @@ def _build_filters(model, query: Dict[str, Any]):
             col = getattr(model, key)
             if isinstance(value, dict):
                 for op, val in value.items():
+                    converted_val = _convert_value(col, val)
                     if op == '$in':
                         conditions.append(col.in_(val))
                     elif op == '$nin':
                         conditions.append(~col.in_(val))
                     elif op == '$ne':
-                        conditions.append(col != val)
+                        conditions.append(col != converted_val)
                     elif op == '$lt':
-                        conditions.append(col < val)
+                        conditions.append(col < converted_val)
                     elif op == '$lte':
-                        conditions.append(col <= val)
+                        conditions.append(col <= converted_val)
                     elif op == '$gt':
-                        conditions.append(col > val)
+                        conditions.append(col > converted_val)
                     elif op == '$gte':
-                        conditions.append(col >= val)
+                        conditions.append(col >= converted_val)
                     elif op == '$regex':
                         pattern = val
                         conditions.append(col.ilike(f'%{pattern}%'))
