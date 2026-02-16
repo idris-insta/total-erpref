@@ -360,8 +360,11 @@ export default defineConfig({
       'tape-erp.preview.emergentagent.com',
       '.emergentagent.com',
       '.emergent.sh',
+      '.emergentcf.cloud',
       'localhost',
       'adhesive-powerhouse.cluster-6.preview.emergentcf.cloud',
+      'erp-adhesive-hub.preview.emergentagent.com',
+      'erp-adhesive-hub.cluster-0.preview.emergentcf.cloud',
     ],
     watch: {
       ignored: ['**/node_modules/**', '**/.git/**', '**/build/**', '**/dist/**', '**/coverage/**'],
