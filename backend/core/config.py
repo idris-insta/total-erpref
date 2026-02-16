@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # API
     API_V1_PREFIX: str = "/api"
     
+    # CORS
+    CORS_ORIGINS: str = "*"
+    
     # File Storage
     UPLOAD_DIR: str = "/tmp/uploads"
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
@@ -39,6 +42,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 @lru_cache()
