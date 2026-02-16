@@ -132,35 +132,7 @@ class BaseRepository(Generic[T]):
             
             # Apply filters
             if filters:
-                conditions = []
-                for key, value in filters.items():
-                    if hasattr(self.model, key):
-                        col = getattr(self.model, key)
-                        if isinstance(value, dict):
-                            # Handle operators like $in, $ne, etc.
-                            if '$in' in value:
-                                conditions.append(col.in_(value['$in']))
-                            elif '$nin' in value:
-                                conditions.append(~col.in_(value['$nin']))
-                            elif '$ne' in value:
-                                conditions.append(col != value['$ne'])
-                            elif '$lt' in value:
-                                conditions.append(col < value['$lt'])
-                            elif '$lte' in value:
-                                conditions.append(col <= value['$lte'])
-                            elif '$gt' in value:
-                                conditions.append(col > value['$gt'])
-                            elif '$gte' in value:
-                                conditions.append(col >= value['$gte'])
-                            elif '$regex' in value:
-                                pattern = value['$regex']
-                                if value.get('$options', '') == 'i':
-                                    conditions.append(col.ilike(f'%{pattern}%'))
-                                else:
-                                    conditions.append(col.like(f'%{pattern}%'))
-                        else:
-                            conditions.append(col == value)
-                
+                conditions = self._build_conditions(filters)
                 if conditions:
                     query = query.where(and_(*conditions))
             
