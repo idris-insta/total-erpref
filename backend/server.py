@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
+from contextlib import asynccontextmanager
 import os
 import logging
 from pathlib import Path
@@ -12,25 +12,38 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
-from emergentintegrations.llm.chat import LlmChat, UserMessage
-
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-app = FastAPI()
-api_router = APIRouter(prefix="/api")
-security = HTTPBearer()
-
-JWT_SECRET = os.getenv('JWT_SECRET', 'adhesive-erp-secret-key-change-in-production')
-JWT_ALGORITHM = 'HS256'
+# Import database components
+from core.database import init_db, close_db, async_session_factory
+from core.config import settings
+from repositories.settings import user_repository
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler"""
+    # Startup
+    logger.info("Starting up - initializing database...")
+    await init_db()
+    logger.info("Database initialized successfully")
+    yield
+    # Shutdown
+    logger.info("Shutting down - closing database connection...")
+    await close_db()
+
+
+app = FastAPI(lifespan=lifespan)
+api_router = APIRouter(prefix="/api")
+security = HTTPBearer()
+
+JWT_SECRET = settings.JWT_SECRET
+JWT_ALGORITHM = settings.JWT_ALGORITHM
 
 
 class UserLogin(BaseModel):
@@ -45,7 +58,7 @@ class UserCreate(BaseModel):
     location: Optional[str] = None
     department: Optional[str] = None
     team: Optional[str] = None
-    reports_to: Optional[str] = None  # user_id of manager/team leader
+    reports_to: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: str
@@ -63,7 +76,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         token = credentials.credentials
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         user_id = payload.get('user_id')
-        user = await db.users.find_one({'id': user_id}, {'_id': 0})
+        user = await user_repository.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         return user
@@ -75,7 +88,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(user_data: UserCreate):
-    existing = await db.users.find_one({'email': user_data.email}, {'_id': 0})
+    existing = await user_repository.get_by_email(user_data.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -91,9 +104,9 @@ async def register(user_data: UserCreate):
         'department': user_data.department,
         'team': user_data.team,
         'reports_to': user_data.reports_to,
-        'created_at': datetime.now(timezone.utc).isoformat()
+        'is_active': True
     }
-    await db.users.insert_one(user_doc)
+    await user_repository.create(user_doc)
     
     token = jwt.encode({'user_id': user_id, 'exp': datetime.now(timezone.utc) + timedelta(days=7)}, JWT_SECRET, algorithm=JWT_ALGORITHM)
     
@@ -104,7 +117,7 @@ async def register(user_data: UserCreate):
 
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
-    user = await db.users.find_one({'email': credentials.email}, {'_id': 0})
+    user = await user_repository.get_by_email(credentials.email)
     if not user or not bcrypt.checkpw(credentials.password.encode('utf-8'), user['password'].encode('utf-8')):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
@@ -125,6 +138,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     )
 
 
+# Import route modules - these will need to be updated to use PostgreSQL
 from routes import crm, inventory, production, procurement, accounts, hrms, quality, dashboard, settings, customization, documents, master_data, permissions, approvals, reports
 from routes import branches, gatepass, production_v2, expenses, payroll, employee_vault, sales_incentives, import_bridge, director_dashboard
 from routes import gst_compliance, inventory_advanced, reports_analytics
@@ -143,7 +157,7 @@ from routes import field_registry
 from routes import warehouse_stock
 from routes import production_stages
 
-# NEW: Import v1 API routes (Layered Architecture)
+# Import v1 API routes (Layered Architecture - PostgreSQL)
 from api.v1.crm import router as crm_v1_router
 from api.v1.inventory import router as inventory_v1_router
 from api.v1.production import router as production_v1_router
@@ -154,25 +168,17 @@ from api.v1.quality import router as quality_v1_router
 from api.v1.sales_incentives import router as sales_incentives_v1_router
 from api.v1.settings import router as settings_v1_router
 
+# Include legacy routes (will be migrated to PostgreSQL incrementally)
 api_router.include_router(crm.router, prefix="/crm", tags=["CRM"])
-# NEW: Add v1 versioned CRM routes
-api_router.include_router(crm_v1_router, prefix="/v1", tags=["CRM v1 - Layered Architecture"])
-# NEW: Add v1 versioned Inventory routes
-api_router.include_router(inventory_v1_router, prefix="/v1", tags=["Inventory v1 - Layered Architecture"])
-# NEW: Add v1 versioned Production routes
-api_router.include_router(production_v1_router, prefix="/v1", tags=["Production v1 - Layered Architecture"])
-# NEW: Add v1 versioned Accounts routes
-api_router.include_router(accounts_v1_router, prefix="/v1", tags=["Accounts v1 - Layered Architecture"])
-# NEW: Add v1 versioned HRMS routes
-api_router.include_router(hrms_v1_router, prefix="/v1", tags=["HRMS v1 - Layered Architecture"])
-# NEW: Add v1 versioned Procurement routes
-api_router.include_router(procurement_v1_router, prefix="/v1", tags=["Procurement v1 - Layered Architecture"])
-# NEW: Add v1 versioned Quality routes
-api_router.include_router(quality_v1_router, prefix="/v1", tags=["Quality v1 - Layered Architecture"])
-# NEW: Add v1 versioned Sales Incentives routes
-api_router.include_router(sales_incentives_v1_router, prefix="/v1", tags=["Sales Incentives v1 - Layered Architecture"])
-# NEW: Add v1 versioned Settings routes
-api_router.include_router(settings_v1_router, prefix="/v1", tags=["Settings v1 - Layered Architecture"])
+api_router.include_router(crm_v1_router, prefix="/v1", tags=["CRM v1 - PostgreSQL"])
+api_router.include_router(inventory_v1_router, prefix="/v1", tags=["Inventory v1 - PostgreSQL"])
+api_router.include_router(production_v1_router, prefix="/v1", tags=["Production v1 - PostgreSQL"])
+api_router.include_router(accounts_v1_router, prefix="/v1", tags=["Accounts v1 - PostgreSQL"])
+api_router.include_router(hrms_v1_router, prefix="/v1", tags=["HRMS v1 - PostgreSQL"])
+api_router.include_router(procurement_v1_router, prefix="/v1", tags=["Procurement v1 - PostgreSQL"])
+api_router.include_router(quality_v1_router, prefix="/v1", tags=["Quality v1 - PostgreSQL"])
+api_router.include_router(sales_incentives_v1_router, prefix="/v1", tags=["Sales Incentives v1 - PostgreSQL"])
+api_router.include_router(settings_v1_router, prefix="/v1", tags=["Settings v1 - PostgreSQL"])
 api_router.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
 api_router.include_router(production.router, prefix="/production", tags=["Production"])
 api_router.include_router(procurement.router, prefix="/procurement", tags=["Procurement"])
@@ -188,7 +194,6 @@ api_router.include_router(permissions.router, prefix="/permissions", tags=["Perm
 api_router.include_router(approvals.router, prefix="/approvals", tags=["Approvals"])
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 
-# New modules from Master Technical Summary
 api_router.include_router(branches.router, prefix="/branches", tags=["Branches"])
 api_router.include_router(gatepass.router, prefix="/gatepass", tags=["Gatepass"])
 api_router.include_router(production_v2.router, prefix="/production-v2", tags=["Production V2 - Coating & Converting"])
@@ -199,7 +204,6 @@ api_router.include_router(sales_incentives.router, prefix="/sales-incentives", t
 api_router.include_router(import_bridge.router, prefix="/imports", tags=["Import Bridge"])
 api_router.include_router(director_dashboard.router, prefix="/director", tags=["Director Command Center"])
 
-# Advanced Modules - Powerhouse Features
 api_router.include_router(gst_compliance.router, prefix="/gst", tags=["GST Compliance"])
 api_router.include_router(inventory_advanced.router, prefix="/inventory-advanced", tags=["Advanced Inventory"])
 api_router.include_router(reports_analytics.router, prefix="/analytics", tags=["Reports & Analytics"])
@@ -209,7 +213,6 @@ api_router.include_router(custom_fields.router, prefix="/custom-fields", tags=["
 api_router.include_router(core_engine.router, prefix="/core", tags=["Core Engine"])
 api_router.include_router(ai_bi.router, prefix="/ai", tags=["AI Business Intelligence"])
 
-# New Feature Modules
 api_router.include_router(chat.router, prefix="/chat", tags=["Internal Chat"])
 api_router.include_router(drive.router, prefix="/drive", tags=["Drive Storage"])
 api_router.include_router(bulk_import.router, prefix="/bulk-import", tags=["Bulk Import"])
@@ -229,21 +232,25 @@ api_router.include_router(production_stages.router, prefix="/production-stages",
 @api_router.get("/dashboard/overview")
 async def dashboard_overview(current_user: dict = Depends(get_current_user)):
     """Get executive dashboard overview"""
-    from datetime import datetime, timedelta
+    from repositories.accounts import invoice_repository
+    from repositories.crm import account_repository, lead_repository
+    from repositories.production import work_order_repository
+    from repositories.inventory import item_repository
+    
     today = datetime.now()
     month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
-    # Get counts and aggregations
-    invoices = await db.invoices.find({"invoice_type": "Sales"}).to_list(1000)
-    customers = await db.customers.count_documents({})
-    work_orders = await db.work_orders.count_documents({})
-    items_low_stock = await db.items.count_documents({"current_stock": {"$lt": 10}})
+    # Get counts
+    invoices = await invoice_repository.get_all({'invoice_type': 'Sales'})
+    customers = await account_repository.count()
+    work_orders = await work_order_repository.count()
+    items_low_stock = len(await item_repository.get_low_stock(10))
     
     total_revenue = sum(inv.get("total_amount", 0) for inv in invoices if inv.get("status") not in ["cancelled", "draft"])
     month_invoices = [inv for inv in invoices if inv.get("created_at", "").startswith(month_start.strftime("%Y-%m"))]
     monthly_revenue = sum(inv.get("total_amount", 0) for inv in month_invoices)
     
-    active_leads = await db.leads.count_documents({"status": {"$nin": ["won", "lost", "closed"]}})
+    active_leads = await lead_repository.count({'status': {'$nin': ['won', 'lost', 'closed']}})
     
     return {
         "total_revenue": total_revenue,
@@ -259,12 +266,14 @@ async def dashboard_overview(current_user: dict = Depends(get_current_user)):
 @api_router.get("/dashboard/revenue-analytics")
 async def dashboard_revenue_analytics(period: str = "month", current_user: dict = Depends(get_current_user)):
     """Get revenue analytics for dashboard"""
-    invoices = await db.invoices.find({"invoice_type": "Sales", "status": {"$ne": "cancelled"}}, {"_id": 0}).to_list(500)
+    from repositories.accounts import invoice_repository
     
-    # Group by month for simplicity
+    invoices = await invoice_repository.get_all({'invoice_type': 'Sales', 'status': {'$ne': 'cancelled'}})
+    
+    # Group by month
     monthly_data = {}
     for inv in invoices:
-        date_str = inv.get("invoice_date", inv.get("created_at", ""))[:7]
+        date_str = str(inv.get("invoice_date", inv.get("created_at", "")))[:7]
         if date_str:
             if date_str not in monthly_data:
                 monthly_data[date_str] = {"revenue": 0, "count": 0}
@@ -294,7 +303,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
