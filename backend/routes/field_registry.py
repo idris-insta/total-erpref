@@ -181,7 +181,8 @@ async def save_field_config(config: ModuleEntityConfig, current_user: dict = Dep
     
     # Convert to dict and add metadata
     config_dict = config.model_dump()
-    config_dict['updated_at'] = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
+    config_dict['updated_at'] = now
     config_dict['updated_by'] = current_user['id']
     
     logger.info(f"Saving field config for {config.module}/{config.entity} with {len(config.fields)} fields")
@@ -195,8 +196,14 @@ async def save_field_config(config: ModuleEntityConfig, current_user: dict = Dep
     logger.info(f"Existing config found: {existing is not None}")
     
     if existing:
-        # Update existing
-        config_dict['created_at'] = existing.get('created_at', config_dict['updated_at'])
+        # Update existing - preserve created_at as datetime or convert from string
+        existing_created_at = existing.get('created_at')
+        if isinstance(existing_created_at, str):
+            try:
+                existing_created_at = datetime.fromisoformat(existing_created_at.replace('Z', '+00:00'))
+            except (ValueError, TypeError):
+                existing_created_at = now
+        config_dict['created_at'] = existing_created_at or now
         config_dict['created_by'] = existing.get('created_by', current_user['id'])
         result = await db.field_configurations.update_one(
             {'module': config.module, 'entity': config.entity},
@@ -206,7 +213,7 @@ async def save_field_config(config: ModuleEntityConfig, current_user: dict = Dep
     else:
         # Create new
         config_dict['id'] = str(uuid.uuid4())
-        config_dict['created_at'] = config_dict['updated_at']
+        config_dict['created_at'] = now
         config_dict['created_by'] = current_user['id']
         result = await db.field_configurations.insert_one(config_dict)
         logger.info(f"Insert result: inserted_id={result.inserted_id}")
