@@ -245,34 +245,36 @@ class LeadUpdate(BaseModel):
 class Lead(BaseModel):
     id: str
     company_name: str
-    contact_person: str
-    email: str
-    phone: str
+    contact_person: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     mobile: Optional[str] = None
 
     address: Optional[str] = None
-    country: str = "India"
+    country: Optional[str] = "India"
     state: Optional[str] = None
     district: Optional[str] = None
     city: Optional[str] = None
     pincode: Optional[str] = None
 
-    pipeline: str = "main"
+    pipeline: Optional[str] = "main"
     customer_type: Optional[str] = None
 
-    source: str
+    source: Optional[str] = None
     industry: Optional[str] = None
-    status: str
+    status: Optional[str] = "new"
     product_interest: Optional[str] = None
     estimated_value: Optional[float] = None
     notes: Optional[str] = None
     assigned_to: Optional[str] = None
     next_followup_date: Optional[str] = None
     followup_activity: Optional[str] = None
-    lead_score: int = 0
+    lead_score: Optional[int] = 0
     last_contacted: Optional[str] = None
-    created_at: str
-    updated_at: str
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
 
 # ==================== ACCOUNT MODELS ====================
 class ContactPerson(BaseModel):
