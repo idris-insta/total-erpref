@@ -4,8 +4,8 @@ CRM Repositories - Data Access Layer for CRM module
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 
-from ..base import BaseRepository
-from ...core.database import db
+from .base import BaseRepository
+from ..core.database import db
 
 
 class LeadRepository(BaseRepository):
