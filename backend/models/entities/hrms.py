@@ -28,6 +28,7 @@ class Employee(Base, UUIDMixin, TimestampMixin):
     city: Mapped[str] = mapped_column(String(100), nullable=True)
     state: Mapped[str] = mapped_column(String(100), nullable=True)
     pincode: Mapped[str] = mapped_column(String(20), nullable=True)
+    location: Mapped[str] = mapped_column(String(255), nullable=True)
     emergency_contact: Mapped[dict] = mapped_column(JSONB, nullable=True)
     
     # Employment
@@ -35,11 +36,13 @@ class Employee(Base, UUIDMixin, TimestampMixin):
     designation: Mapped[str] = mapped_column(String(100), nullable=True)
     employment_type: Mapped[str] = mapped_column(String(50), default="permanent")  # permanent, contract, trainee
     joining_date: Mapped[date] = mapped_column(Date, nullable=True)
+    date_of_joining: Mapped[str] = mapped_column(String(50), nullable=True)  # String version for schema compatibility
     confirmation_date: Mapped[date] = mapped_column(Date, nullable=True)
     resignation_date: Mapped[date] = mapped_column(Date, nullable=True)
     leaving_date: Mapped[date] = mapped_column(Date, nullable=True)
     reports_to: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=True)
     branch_id: Mapped[str] = mapped_column(String(36), ForeignKey("branches.id"), nullable=True)
+    shift_timing: Mapped[str] = mapped_column(String(100), nullable=True)
     
     # Status
     status: Mapped[str] = mapped_column(String(50), default="active", index=True)  # active, inactive, terminated, resigned
@@ -54,9 +57,14 @@ class Employee(Base, UUIDMixin, TimestampMixin):
     bank_name: Mapped[str] = mapped_column(String(255), nullable=True)
     bank_account: Mapped[str] = mapped_column(String(50), nullable=True)
     ifsc_code: Mapped[str] = mapped_column(String(20), nullable=True)
+    bank_ifsc: Mapped[str] = mapped_column(String(20), nullable=True)  # Alias for ifsc_code
     
     # Salary
     basic_salary: Mapped[float] = mapped_column(Float, default=0)
+    hra: Mapped[float] = mapped_column(Float, default=0)
+    pf: Mapped[float] = mapped_column(Float, default=0)
+    esi: Mapped[float] = mapped_column(Float, default=0)
+    pt: Mapped[float] = mapped_column(Float, default=0)
     salary_structure_id: Mapped[str] = mapped_column(String(36), ForeignKey("salary_structures.id"), nullable=True)
     
     # User link
