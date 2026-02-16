@@ -45,6 +45,22 @@ class BaseRepository(Generic[T]):
                 value = value.isoformat()
             result[column.name] = value
         return result
+    def _convert_datetime_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert datetime string fields to datetime objects"""
+        from sqlalchemy import DateTime
+        
+        for col in self.model.__table__.columns:
+            if col.name in data and isinstance(col.type, DateTime):
+                val = data[col.name]
+                if isinstance(val, str):
+                    try:
+                        if 'T' in val:
+                            data[col.name] = datetime.fromisoformat(val.replace('Z', '+00:00'))
+                        else:
+                            data[col.name] = datetime.strptime(val, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        pass  # Keep the original value if conversion fails
+        return data
     
     # ==================== CREATE ====================
     async def create(self, data: Dict[str, Any], user_id: Optional[str] = None) -> Dict[str, Any]:
@@ -62,6 +78,9 @@ class BaseRepository(Generic[T]):
             if user_id:
                 data['created_by'] = user_id
                 data['updated_by'] = user_id
+            
+            # Convert datetime string fields
+            data = self._convert_datetime_fields(data)
             
             # Create instance
             obj = self.model(**data)
