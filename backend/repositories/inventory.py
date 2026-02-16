@@ -133,7 +133,7 @@ class BatchRepository(BaseRepository):
     
     async def get_expiring_soon(self, days: int = 30) -> List[Dict[str, Any]]:
         """Get batches expiring within specified days"""
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         future_date = (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
         return await self.get_all({
             'expiry_date': {'$lte': future_date, '$gte': datetime.now(timezone.utc).isoformat()}
