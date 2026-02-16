@@ -11,7 +11,7 @@ from repositories.hrms import (
     payroll_repository
 )
 from core.exceptions import NotFoundError, ValidationError, BusinessRuleError, DuplicateError
-from core.database import db
+from core.legacy_db import db
 
 
 class EmployeeService:

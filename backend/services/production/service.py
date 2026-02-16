@@ -13,7 +13,7 @@ from repositories.production import (
 )
 from repositories.inventory import stock_repository, item_repository
 from core.exceptions import NotFoundError, ValidationError, BusinessRuleError
-from core.database import db
+from core.legacy_db import db
 
 
 # Production stage constants

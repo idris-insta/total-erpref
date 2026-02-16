@@ -13,7 +13,7 @@ from repositories.inventory import (
     batch_repository
 )
 from core.exceptions import NotFoundError, ValidationError, BusinessRuleError
-from core.database import db
+from core.legacy_db import db
 
 
 class ItemService:

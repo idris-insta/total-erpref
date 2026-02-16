@@ -12,7 +12,7 @@ from repositories.sales_incentives import (
 )
 from repositories.hrms import employee_repository
 from core.exceptions import NotFoundError, ValidationError, BusinessRuleError
-from core.database import db
+from core.legacy_db import db
 
 
 class SalesTargetService:

@@ -12,7 +12,7 @@ from repositories.settings import (
     user_repository
 )
 from core.exceptions import NotFoundError, ValidationError, DuplicateError
-from core.database import db
+from core.legacy_db import db
 
 
 class FieldConfigurationService:

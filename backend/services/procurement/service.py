@@ -12,7 +12,7 @@ from repositories.procurement import (
 )
 from repositories.inventory import stock_repository
 from core.exceptions import NotFoundError, ValidationError, BusinessRuleError, DuplicateError
-from core.database import db
+from core.legacy_db import db
 
 
 class SupplierService:

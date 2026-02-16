@@ -11,7 +11,7 @@ from repositories.crm import (
     sample_repository
 )
 from core.exceptions import NotFoundError, ValidationError, DuplicateError
-from core.database import db
+from core.legacy_db import db
 
 
 class LeadService:
