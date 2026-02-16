@@ -1,16 +1,17 @@
 """
-Procurement Repositories - Data Access Layer for Procurement module
+Procurement Repositories - Data Access Layer for Procurement module (PostgreSQL/SQLAlchemy)
 """
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 
 from repositories.base import BaseRepository
-from core.database import db
+from models.entities.procurement import Supplier, PurchaseOrder, PurchaseRequisition, GRN, LandingCost
+from core.database import async_session_factory
 
 
-class SupplierRepository(BaseRepository):
+class SupplierRepository(BaseRepository[Supplier]):
     """Repository for Supplier operations"""
-    collection_name = "suppliers"
+    model = Supplier
     
     async def get_by_type(self, supplier_type: str) -> List[Dict[str, Any]]:
         """Get suppliers by type"""
@@ -22,17 +23,12 @@ class SupplierRepository(BaseRepository):
     
     async def search(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
         """Search suppliers by name or code"""
-        return await self.get_all({
-            '$or': [
-                {'supplier_name': {'$regex': query, '$options': 'i'}},
-                {'supplier_code': {'$regex': query, '$options': 'i'}}
-            ]
-        }, limit=limit)
+        return await super().search(query, ['supplier_name', 'supplier_code'], limit)
 
 
-class PurchaseOrderRepository(BaseRepository):
+class PurchaseOrderRepository(BaseRepository[PurchaseOrder]):
     """Repository for Purchase Order operations"""
-    collection_name = "purchase_orders"
+    model = PurchaseOrder
     
     async def get_by_supplier(self, supplier_id: str) -> List[Dict[str, Any]]:
         """Get POs for a supplier"""
@@ -52,9 +48,9 @@ class PurchaseOrderRepository(BaseRepository):
         return f"PO-{datetime.now().strftime('%Y%m')}-{count + 1:04d}"
 
 
-class GRNRepository(BaseRepository):
+class GRNRepository(BaseRepository[GRN]):
     """Repository for Goods Receipt Note operations"""
-    collection_name = "grn"
+    model = GRN
     
     async def get_by_po(self, po_id: str) -> List[Dict[str, Any]]:
         """Get GRNs for a PO"""
@@ -70,9 +66,9 @@ class GRNRepository(BaseRepository):
         return f"GRN-{datetime.now().strftime('%Y%m')}-{count + 1:04d}"
 
 
-class PurchaseRequisitionRepository(BaseRepository):
+class PurchaseRequisitionRepository(BaseRepository[PurchaseRequisition]):
     """Repository for Purchase Requisition operations"""
-    collection_name = "purchase_requisitions"
+    model = PurchaseRequisition
     
     async def get_by_status(self, status: str) -> List[Dict[str, Any]]:
         """Get requisitions by status"""
@@ -88,8 +84,18 @@ class PurchaseRequisitionRepository(BaseRepository):
         return f"PR-{datetime.now().strftime('%Y%m')}-{count + 1:04d}"
 
 
+class LandingCostRepository(BaseRepository[LandingCost]):
+    """Repository for Landing Cost operations"""
+    model = LandingCost
+    
+    async def get_by_grn(self, grn_id: str) -> List[Dict[str, Any]]:
+        """Get landing costs for a GRN"""
+        return await self.get_all({'grn_id': grn_id})
+
+
 # Repository instances
 supplier_repository = SupplierRepository()
 purchase_order_repository = PurchaseOrderRepository()
 grn_repository = GRNRepository()
 purchase_requisition_repository = PurchaseRequisitionRepository()
+landing_cost_repository = LandingCostRepository()
