@@ -126,9 +126,6 @@ class TestCRMLeadsV1:
         assert data["company_name"] == lead_data["company_name"]
         assert data["email"] == lead_data["email"]
         
-        # Return lead_id for cleanup
-        return data["id"]
-        
     def test_get_lead_by_id(self, auth_headers):
         """Test GET /api/v1/crm/leads/{id} returns lead details"""
         # First create a lead
