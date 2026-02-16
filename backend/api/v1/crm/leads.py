@@ -37,7 +37,7 @@ async def get_kanban_view(
 ):
     """Get leads organized for Kanban view"""
     # Get stages from field registry or use defaults
-    from ....core.database import db
+    from core.database import db
     config = await db.field_configurations.find_one(
         {'module': 'crm', 'entity': 'leads'},
         {'_id': 0, 'kanban_stages': 1}
