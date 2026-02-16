@@ -2,7 +2,8 @@
 Core Module Exports
 """
 from .config import settings, get_settings
-from .database import db, get_db, Database
+from .database import init_db, close_db, async_session_factory, get_session, Base, Database
+from .legacy_db import db
 from .security import (
     hash_password,
     verify_password,
@@ -30,7 +31,11 @@ __all__ = [
     "get_settings",
     # Database
     "db",
-    "get_db",
+    "init_db",
+    "close_db",
+    "async_session_factory",
+    "get_session",
+    "Base",
     "Database",
     # Security
     "hash_password",
