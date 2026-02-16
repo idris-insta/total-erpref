@@ -21,6 +21,9 @@ from core.database import init_db, close_db, async_session_factory
 from core.config import settings
 from repositories.settings import user_repository
 
+# Import legacy db compatibility layer for routes that still use MongoDB-like syntax
+from core.legacy_db import db
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
