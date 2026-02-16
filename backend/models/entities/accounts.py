@@ -52,6 +52,10 @@ class Invoice(Base, UUIDMixin, TimestampMixin):
     po_number: Mapped[str] = mapped_column(String(100), nullable=True)  # Customer's PO
     notes: Mapped[str] = mapped_column(Text, nullable=True)
     
+    # Denormalized account info for display
+    account_name: Mapped[str] = mapped_column(String(255), nullable=True)
+    account_gstin: Mapped[str] = mapped_column(String(20), nullable=True)
+    
     # GST Details
     place_of_supply: Mapped[str] = mapped_column(String(100), nullable=True)
     reverse_charge: Mapped[bool] = mapped_column(Boolean, default=False)
