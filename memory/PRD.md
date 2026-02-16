@@ -2184,3 +2184,85 @@ Repository Layer → Service Layer → API Layer
 ---
 
 ## Last Updated: February 16, 2026
+
+---
+
+## Architectural Refactoring - Phase 2 Complete (February 16, 2026)
+
+### Newly Refactored Modules
+Three additional modules have been refactored to use the layered architecture:
+
+1. **Accounts Module** (Invoices, Payments)
+   - Repository: `/app/backend/repositories/accounts.py`
+   - Service: `/app/backend/services/accounts/service.py`
+   - API: `/app/backend/api/v1/accounts/`
+   - Features: Invoice CRUD, aging analysis, payment recording
+
+2. **HRMS Module** (Employees, Attendance, Leave Requests, Payroll)
+   - Repository: `/app/backend/repositories/hrms.py`
+   - Service: `/app/backend/services/hrms/service.py`
+   - API: `/app/backend/api/v1/hrms/`
+   - Features: Employee management, attendance tracking, leave approval, payroll generation
+
+3. **Procurement Module** (Suppliers, Purchase Orders, GRN)
+   - Repository: `/app/backend/repositories/procurement.py`
+   - Service: `/app/backend/services/procurement/service.py`
+   - API: `/app/backend/api/v1/procurement/`
+   - Features: Supplier management, PO lifecycle, GRN with inventory integration
+
+### New v1 API Endpoints
+
+**Accounts Module:**
+- `GET /api/v1/accounts/invoices` - List invoices
+- `GET /api/v1/accounts/invoices/overdue` - Overdue invoices
+- `GET /api/v1/accounts/invoices/aging` - Aging analysis
+- `POST /api/v1/accounts/invoices` - Create invoice
+- `POST /api/v1/accounts/payments` - Create payment
+
+**HRMS Module:**
+- `GET /api/v1/hrms/employees` - List employees
+- `POST /api/v1/hrms/employees` - Create employee
+- `GET /api/v1/hrms/attendance` - List attendance
+- `POST /api/v1/hrms/attendance/{id}/check-in` - Check in
+- `POST /api/v1/hrms/attendance/{id}/check-out` - Check out
+- `GET /api/v1/hrms/leave-requests` - List leave requests
+- `GET /api/v1/hrms/leave-requests/pending` - Pending requests
+- `PUT /api/v1/hrms/leave-requests/{id}/approve` - Approve request
+- `POST /api/v1/hrms/payroll/generate` - Generate payroll
+
+**Procurement Module:**
+- `GET /api/v1/procurement/suppliers` - List suppliers
+- `POST /api/v1/procurement/suppliers` - Create supplier
+- `GET /api/v1/procurement/purchase-orders` - List POs
+- `GET /api/v1/procurement/purchase-orders/pending` - Pending POs
+- `POST /api/v1/procurement/purchase-orders` - Create PO
+- `PUT /api/v1/procurement/purchase-orders/{id}/send` - Send PO
+- `POST /api/v1/procurement/grn` - Create GRN
+
+### Frontend API Migration
+Created module-specific API services in `/app/frontend/src/core/api/`:
+- `client.js` - Updated with v1Api axios instance
+- `index.js` - Exports all module APIs
+- `crm.js` - CRM API service
+- `inventory.js` - Inventory API service
+- `production.js` - Production API service
+- `accounts.js` - Accounts API service
+- `hrms.js` - HRMS API service
+- `procurement.js` - Procurement API service
+
+### Testing Results (Iteration 25)
+- **Backend:** 100% (15/15 tests passed)
+- **Frontend:** 100% (Dashboard, CRM, Inventory pages verified)
+- **Test File:** `/app/backend/tests/test_v1_accounts_hrms_procurement.py`
+
+### Total Modules Refactored: 6
+1. CRM (Leads, Accounts, Quotations, Samples)
+2. Inventory (Items, Warehouses, Transfers, Adjustments)
+3. Production (Machines, Order Sheets, Work Orders)
+4. Accounts (Invoices, Payments)
+5. HRMS (Employees, Attendance, Leave Requests, Payroll)
+6. Procurement (Suppliers, Purchase Orders, GRN)
+
+---
+
+## Last Updated: February 16, 2026
