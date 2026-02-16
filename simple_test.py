@@ -6,7 +6,7 @@ Simple test to debug approval enforcement
 import requests
 import json
 
-BASE_URL = "https://adhesive-powerhouse.preview.emergentagent.com/api"
+BASE_URL = "https://erp-adhesive-hub.preview.emergentagent.com/api"
 ADMIN_EMAIL = "admin@instabiz.com"
 ADMIN_PASSWORD = "adminpassword"
 

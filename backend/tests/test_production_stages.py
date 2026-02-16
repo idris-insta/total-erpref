@@ -13,7 +13,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://adhesive-powerhouse.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://erp-adhesive-hub.preview.emergentagent.com')
 
 class TestProductionStagesAuth:
     """Authentication and basic connectivity tests"""
