@@ -1,16 +1,19 @@
 """
-CRM Repositories - Data Access Layer for CRM module
+CRM Repositories - Data Access Layer for CRM module (PostgreSQL/SQLAlchemy)
 """
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
+from sqlalchemy import select, and_, or_, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.base import BaseRepository
-from core.database import db
+from models.entities.base import Lead, Account, Quotation, Sample, Followup
+from core.database import async_session_factory
 
 
-class LeadRepository(BaseRepository):
+class LeadRepository(BaseRepository[Lead]):
     """Repository for Lead operations"""
-    collection_name = "leads"
+    model = Lead
     
     async def get_by_status(self, status: str, limit: int = 100) -> List[Dict[str, Any]]:
         """Get leads by status"""
@@ -33,18 +36,12 @@ class LeadRepository(BaseRepository):
     
     async def search(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
         """Search leads by company name, contact person, or email"""
-        return await self.get_all({
-            '$or': [
-                {'company_name': {'$regex': query, '$options': 'i'}},
-                {'contact_person': {'$regex': query, '$options': 'i'}},
-                {'email': {'$regex': query, '$options': 'i'}}
-            ]
-        }, limit=limit)
+        return await super().search(query, ['company_name', 'contact_person', 'email'], limit)
 
 
-class AccountRepository(BaseRepository):
+class AccountRepository(BaseRepository[Account]):
     """Repository for Account (Customer/Supplier) operations"""
-    collection_name = "accounts"
+    model = Account
     
     async def get_by_type(self, account_type: str) -> List[Dict[str, Any]]:
         """Get accounts by type (customer/supplier/both)"""
@@ -54,11 +51,23 @@ class AccountRepository(BaseRepository):
     
     async def get_customers(self) -> List[Dict[str, Any]]:
         """Get all customer accounts"""
-        return await self.get_all({'account_type': {'$in': ['customer', 'both']}})
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(Account).where(
+                    or_(Account.account_type == 'customer', Account.account_type == 'both')
+                )
+            )
+            return [self._to_dict(obj) for obj in result.scalars().all()]
     
     async def get_suppliers(self) -> List[Dict[str, Any]]:
         """Get all supplier accounts"""
-        return await self.get_all({'account_type': {'$in': ['supplier', 'both']}})
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(Account).where(
+                    or_(Account.account_type == 'supplier', Account.account_type == 'both')
+                )
+            )
+            return [self._to_dict(obj) for obj in result.scalars().all()]
     
     async def get_by_gstin(self, gstin: str) -> Optional[Dict[str, Any]]:
         """Get account by GSTIN"""
@@ -66,12 +75,7 @@ class AccountRepository(BaseRepository):
     
     async def search(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
         """Search accounts by name or GSTIN"""
-        return await self.get_all({
-            '$or': [
-                {'customer_name': {'$regex': query, '$options': 'i'}},
-                {'gstin': {'$regex': query, '$options': 'i'}}
-            ]
-        }, limit=limit)
+        return await super().search(query, ['customer_name', 'gstin'], limit)
     
     async def get_with_balance(self, account_id: str) -> Optional[Dict[str, Any]]:
         """Get account with calculated receivable/payable balance"""
@@ -79,20 +83,17 @@ class AccountRepository(BaseRepository):
         if not account:
             return None
         
-        # Calculate receivable from invoices
-        pipeline = [
-            {'$match': {'account_id': account_id, 'status': {'$ne': 'cancelled'}}},
-            {'$group': {'_id': None, 'total': {'$sum': '$balance_due'}}}
-        ]
-        receivable = await db.invoices.aggregate(pipeline).to_list(1)
-        account['receivable_amount'] = receivable[0]['total'] if receivable else 0
+        # Calculate receivable from invoices - will need Invoice repository
+        from repositories.accounts import invoice_repository
+        balance = await invoice_repository.get_pending_amount(account_id)
+        account['receivable_amount'] = balance
         
         return account
 
 
-class QuotationRepository(BaseRepository):
+class QuotationRepository(BaseRepository[Quotation]):
     """Repository for Quotation operations"""
-    collection_name = "quotations"
+    model = Quotation
     
     async def get_by_account(self, account_id: str) -> List[Dict[str, Any]]:
         """Get quotations for an account"""
@@ -113,18 +114,13 @@ class QuotationRepository(BaseRepository):
     
     async def get_total_value(self, status: Optional[str] = None) -> float:
         """Get total value of quotations"""
-        query = {} if not status else {'status': status}
-        pipeline = [
-            {'$match': query},
-            {'$group': {'_id': None, 'total': {'$sum': '$grand_total'}}}
-        ]
-        result = await self.aggregate(pipeline)
-        return result[0]['total'] if result else 0
+        filters = {} if not status else {'status': status}
+        return await self.aggregate_sum('grand_total', filters)
 
 
-class SampleRepository(BaseRepository):
+class SampleRepository(BaseRepository[Sample]):
     """Repository for Sample operations"""
-    collection_name = "samples"
+    model = Sample
     
     async def get_by_account(self, account_id: str) -> List[Dict[str, Any]]:
         """Get samples for an account"""
@@ -141,10 +137,33 @@ class SampleRepository(BaseRepository):
     
     async def get_pending_feedback(self) -> List[Dict[str, Any]]:
         """Get samples pending feedback"""
-        return await self.get_all({
-            'status': 'feedback_pending',
-            'feedback_due_date': {'$lte': datetime.now().isoformat()}
-        })
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(Sample).where(
+                    and_(
+                        Sample.status == 'feedback_pending',
+                        Sample.feedback_due_date <= datetime.now(timezone.utc)
+                    )
+                )
+            )
+            return [self._to_dict(obj) for obj in result.scalars().all()]
+
+
+class FollowupRepository(BaseRepository[Followup]):
+    """Repository for Followup operations"""
+    model = Followup
+    
+    async def get_by_lead(self, lead_id: str) -> List[Dict[str, Any]]:
+        """Get followups for a lead"""
+        return await self.get_all({'lead_id': lead_id})
+    
+    async def get_by_account(self, account_id: str) -> List[Dict[str, Any]]:
+        """Get followups for an account"""
+        return await self.get_all({'account_id': account_id})
+    
+    async def get_pending(self) -> List[Dict[str, Any]]:
+        """Get pending followups"""
+        return await self.get_all({'status': 'pending'})
 
 
 # Repository instances
@@ -152,3 +171,4 @@ lead_repository = LeadRepository()
 account_repository = AccountRepository()
 quotation_repository = QuotationRepository()
 sample_repository = SampleRepository()
+followup_repository = FollowupRepository()
