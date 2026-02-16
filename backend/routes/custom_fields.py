@@ -12,11 +12,6 @@ from core.legacy_db import db
 
 router = APIRouter()
 
-MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-DB_NAME = os.environ.get('DB_NAME', 'adhesive_erp')
-client = AsyncIOMotorClient(MONGO_URL)
-db = client[DB_NAME]
-
 # Auth dependency
 from server import get_current_user
 
