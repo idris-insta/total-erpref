@@ -1,16 +1,19 @@
 """
-Inventory Repositories - Data Access Layer for Inventory module
+Inventory Repositories - Data Access Layer for Inventory module (PostgreSQL/SQLAlchemy)
 """
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from sqlalchemy import select, and_, or_
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.base import BaseRepository
-from core.database import db
+from models.entities.inventory import Item, Warehouse, Stock, StockTransfer, StockAdjustment, Batch, BinLocation, StockLedger
+from core.database import async_session_factory
 
 
-class ItemRepository(BaseRepository):
+class ItemRepository(BaseRepository[Item]):
     """Repository for Item (Product) operations"""
-    collection_name = "items"
+    model = Item
     
     async def get_by_category(self, category: str) -> List[Dict[str, Any]]:
         """Get items by category"""
@@ -26,20 +29,20 @@ class ItemRepository(BaseRepository):
     
     async def search(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
         """Search items by name, code, or HSN"""
-        return await self.get_all({
-            '$or': [
-                {'item_name': {'$regex': query, '$options': 'i'}},
-                {'item_code': {'$regex': query, '$options': 'i'}},
-                {'hsn_code': {'$regex': query, '$options': 'i'}}
-            ]
-        }, limit=limit)
+        return await super().search(query, ['item_name', 'item_code', 'hsn_code'], limit)
     
     async def get_low_stock(self, threshold: int = None) -> List[Dict[str, Any]]:
         """Get items with stock below reorder level"""
-        query = {'$expr': {'$lt': ['$stock_qty', '$reorder_level']}}
-        if threshold:
-            query = {'stock_qty': {'$lt': threshold}}
-        return await self.get_all(query)
+        async with async_session_factory() as session:
+            if threshold:
+                result = await session.execute(
+                    select(Item).where(Item.stock_qty < threshold)
+                )
+            else:
+                result = await session.execute(
+                    select(Item).where(Item.stock_qty < Item.reorder_level)
+                )
+            return [self._to_dict(obj) for obj in result.scalars().all()]
     
     async def update_stock(self, item_id: str, qty_change: float, user_id: str) -> Optional[Dict[str, Any]]:
         """Update item stock quantity"""
@@ -50,9 +53,9 @@ class ItemRepository(BaseRepository):
         return await self.update(item_id, {'stock_qty': new_qty}, user_id)
 
 
-class WarehouseRepository(BaseRepository):
+class WarehouseRepository(BaseRepository[Warehouse]):
     """Repository for Warehouse operations"""
-    collection_name = "warehouses"
+    model = Warehouse
     
     async def get_by_gstin(self, gstin: str) -> Optional[Dict[str, Any]]:
         """Get warehouse by GSTIN"""
@@ -63,9 +66,9 @@ class WarehouseRepository(BaseRepository):
         return await self.get_all({'is_active': True})
 
 
-class StockRepository(BaseRepository):
+class StockRepository(BaseRepository[Stock]):
     """Repository for Stock operations (item stock per warehouse)"""
-    collection_name = "stock"
+    model = Stock
     
     async def get_by_warehouse(self, warehouse_id: str) -> List[Dict[str, Any]]:
         """Get all stock for a warehouse"""
@@ -93,9 +96,9 @@ class StockRepository(BaseRepository):
             }, user_id)
 
 
-class StockTransferRepository(BaseRepository):
+class StockTransferRepository(BaseRepository[StockTransfer]):
     """Repository for Stock Transfer operations"""
-    collection_name = "stock_transfers"
+    model = StockTransfer
     
     async def get_by_status(self, status: str) -> List[Dict[str, Any]]:
         """Get transfers by status"""
@@ -110,9 +113,9 @@ class StockTransferRepository(BaseRepository):
         return await self.get_by_status('in_transit')
 
 
-class StockAdjustmentRepository(BaseRepository):
+class StockAdjustmentRepository(BaseRepository[StockAdjustment]):
     """Repository for Stock Adjustment operations"""
-    collection_name = "stock_adjustments"
+    model = StockAdjustment
     
     async def get_by_type(self, adjustment_type: str) -> List[Dict[str, Any]]:
         """Get adjustments by type"""
@@ -123,9 +126,9 @@ class StockAdjustmentRepository(BaseRepository):
         return await self.get_all({'status': 'pending'})
 
 
-class BatchRepository(BaseRepository):
+class BatchRepository(BaseRepository[Batch]):
     """Repository for Batch tracking operations"""
-    collection_name = "batches"
+    model = Batch
     
     async def get_by_item(self, item_id: str) -> List[Dict[str, Any]]:
         """Get all batches for an item"""
@@ -133,11 +136,40 @@ class BatchRepository(BaseRepository):
     
     async def get_expiring_soon(self, days: int = 30) -> List[Dict[str, Any]]:
         """Get batches expiring within specified days"""
-        from datetime import timedelta
-        future_date = (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
-        return await self.get_all({
-            'expiry_date': {'$lte': future_date, '$gte': datetime.now(timezone.utc).isoformat()}
-        })
+        async with async_session_factory() as session:
+            now = datetime.now(timezone.utc)
+            future_date = now + timedelta(days=days)
+            result = await session.execute(
+                select(Batch).where(
+                    and_(
+                        Batch.expiry_date <= future_date,
+                        Batch.expiry_date >= now
+                    )
+                )
+            )
+            return [self._to_dict(obj) for obj in result.scalars().all()]
+
+
+class BinLocationRepository(BaseRepository[BinLocation]):
+    """Repository for Bin Location operations"""
+    model = BinLocation
+    
+    async def get_by_warehouse(self, warehouse_id: str) -> List[Dict[str, Any]]:
+        """Get all bins for a warehouse"""
+        return await self.get_all({'warehouse_id': warehouse_id})
+
+
+class StockLedgerRepository(BaseRepository[StockLedger]):
+    """Repository for Stock Ledger operations"""
+    model = StockLedger
+    
+    async def get_by_item(self, item_id: str) -> List[Dict[str, Any]]:
+        """Get ledger entries for an item"""
+        return await self.get_all({'item_id': item_id}, sort_by='transaction_date')
+    
+    async def get_by_warehouse(self, warehouse_id: str) -> List[Dict[str, Any]]:
+        """Get ledger entries for a warehouse"""
+        return await self.get_all({'warehouse_id': warehouse_id}, sort_by='transaction_date')
 
 
 # Repository instances
@@ -147,3 +179,5 @@ stock_repository = StockRepository()
 stock_transfer_repository = StockTransferRepository()
 stock_adjustment_repository = StockAdjustmentRepository()
 batch_repository = BatchRepository()
+bin_location_repository = BinLocationRepository()
+stock_ledger_repository = StockLedgerRepository()
