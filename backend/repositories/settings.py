@@ -1,16 +1,18 @@
 """
-Settings Repositories - Data Access Layer for Settings module
+Settings Repositories - Data Access Layer for Settings module (PostgreSQL/SQLAlchemy)
 """
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 
 from repositories.base import BaseRepository
-from core.database import db
+from models.entities.other import FieldConfiguration, SystemSetting, CompanyProfile, Branch, NumberSeries
+from models.entities.base import User
+from core.database import async_session_factory
 
 
-class FieldConfigurationRepository(BaseRepository):
+class FieldConfigurationRepository(BaseRepository[FieldConfiguration]):
     """Repository for Field Configuration operations (Field Registry)"""
-    collection_name = "field_configurations"
+    model = FieldConfiguration
     
     async def get_by_module(self, module: str) -> List[Dict[str, Any]]:
         """Get configurations for a module"""
@@ -22,8 +24,7 @@ class FieldConfigurationRepository(BaseRepository):
     
     async def get_all_modules(self) -> List[str]:
         """Get list of all modules"""
-        configs = await self.get_all()
-        return list(set(c.get('module') for c in configs if c.get('module')))
+        return await self.distinct('module')
     
     async def upsert_config(self, module: str, entity: str, config: Dict[str, Any], user_id: str) -> Dict[str, Any]:
         """Create or update a field configuration"""
@@ -36,9 +37,9 @@ class FieldConfigurationRepository(BaseRepository):
             return await self.create(config, user_id)
 
 
-class SystemSettingRepository(BaseRepository):
+class SystemSettingRepository(BaseRepository[SystemSetting]):
     """Repository for System Settings operations"""
-    collection_name = "system_settings"
+    model = SystemSetting
     
     async def get_by_category(self, category: str) -> List[Dict[str, Any]]:
         """Get settings by category"""
@@ -52,18 +53,19 @@ class SystemSettingRepository(BaseRepository):
         """Set a system setting"""
         existing = await self.get_setting(key)
         if existing:
-            return await self.update(existing['id'], {'value': value}, user_id)
+            return await self.update(existing['id'], {'value': str(value) if not isinstance(value, dict) else None, 'value_json': value if isinstance(value, dict) else None}, user_id)
         else:
             return await self.create({
                 'key': key,
-                'value': value,
+                'value': str(value) if not isinstance(value, dict) else None,
+                'value_json': value if isinstance(value, dict) else None,
                 'category': category
             }, user_id)
 
 
-class CompanyProfileRepository(BaseRepository):
+class CompanyProfileRepository(BaseRepository[CompanyProfile]):
     """Repository for Company Profile operations"""
-    collection_name = "company_profiles"
+    model = CompanyProfile
     
     async def get_active_profile(self) -> Optional[Dict[str, Any]]:
         """Get the active company profile"""
@@ -74,9 +76,9 @@ class CompanyProfileRepository(BaseRepository):
         return await self.get_one({'gstin': gstin})
 
 
-class BranchRepository(BaseRepository):
+class BranchRepository(BaseRepository[Branch]):
     """Repository for Branch operations"""
-    collection_name = "branches"
+    model = Branch
     
     async def get_active_branches(self) -> List[Dict[str, Any]]:
         """Get all active branches"""
@@ -91,9 +93,9 @@ class BranchRepository(BaseRepository):
         return await self.get_one({'is_head_office': True})
 
 
-class UserRepository(BaseRepository):
+class UserRepository(BaseRepository[User]):
     """Repository for User operations"""
-    collection_name = "users"
+    model = User
     
     async def get_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         """Get user by email"""
@@ -108,9 +110,38 @@ class UserRepository(BaseRepository):
         return await self.get_all({'is_active': True})
 
 
+class NumberSeriesRepository(BaseRepository[NumberSeries]):
+    """Repository for Number Series operations"""
+    model = NumberSeries
+    
+    async def get_by_document_type(self, document_type: str, branch_id: str = None) -> Optional[Dict[str, Any]]:
+        """Get number series for a document type"""
+        filters = {'document_type': document_type}
+        if branch_id:
+            filters['branch_id'] = branch_id
+        return await self.get_one(filters)
+    
+    async def get_next_number(self, document_type: str, branch_id: str = None) -> str:
+        """Get next number in the series"""
+        series = await self.get_by_document_type(document_type, branch_id)
+        if not series:
+            return f"{document_type}-0001"
+        
+        current = series.get('current_number', 0) + 1
+        prefix = series.get('prefix', '')
+        suffix = series.get('suffix', '')
+        padding = series.get('padding', 4)
+        
+        # Update the series
+        await self.update(series['id'], {'current_number': current})
+        
+        return f"{prefix}{str(current).zfill(padding)}{suffix}"
+
+
 # Repository instances
 field_configuration_repository = FieldConfigurationRepository()
 system_setting_repository = SystemSettingRepository()
 company_profile_repository = CompanyProfileRepository()
 branch_repository = BranchRepository()
 user_repository = UserRepository()
+number_series_repository = NumberSeriesRepository()
