@@ -10,7 +10,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from core.config import settings
-from core.database import db
+from core.legacy_db import db
 
 security = HTTPBearer()
 
