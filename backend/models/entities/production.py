@@ -21,11 +21,15 @@ class Machine(Base, UUIDMixin, TimestampMixin):
     current_job: Mapped[str] = mapped_column(String(36), nullable=True)  # current work_order_id
     capacity_per_hour: Mapped[float] = mapped_column(Float, nullable=True)
     capacity_uom: Mapped[str] = mapped_column(String(50), nullable=True)
+    power_consumption_kw: Mapped[float] = mapped_column(Float, nullable=True)
+    maintenance_cycle_days: Mapped[int] = mapped_column(Integer, nullable=True)
+    last_maintenance_date: Mapped[str] = mapped_column(String(50), nullable=True)
     location: Mapped[str] = mapped_column(String(255), nullable=True)
     operator_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
     maintenance_schedule: Mapped[dict] = mapped_column(JSONB, nullable=True)
     last_maintenance: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     next_maintenance: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    notes: Mapped[str] = mapped_column(Text, nullable=True)
     specifications: Mapped[dict] = mapped_column(JSONB, nullable=True)
     custom_fields: Mapped[dict] = mapped_column(JSONB, nullable=True)
 
