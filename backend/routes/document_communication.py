@@ -308,7 +308,7 @@ async def send_document_whatsapp(
     
     # Generate PDF URL (would be hosted URL in production)
     # For now, use the preview endpoint URL
-    base_url = "https://adhesive-modular.preview.emergentagent.com"
+    base_url = "https://postgres-frontend-v1.preview.emergentagent.com"
     pdf_url = f"{base_url}/api/pdf/{request.document_type.replace('_', '-')}/{request.document_id}/preview"
     
     # Generate message
@@ -360,7 +360,7 @@ async def preview_whatsapp_message(
     doc = await get_document(request.document_type, request.document_id)
     doc_number = get_document_number(doc, request.document_type)
     
-    base_url = "https://adhesive-modular.preview.emergentagent.com"
+    base_url = "https://postgres-frontend-v1.preview.emergentagent.com"
     pdf_url = f"{base_url}/api/pdf/{request.document_type.replace('_', '-')}/{request.document_id}/preview"
     
     message = generate_whatsapp_message(

@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Configuration
-BASE_URL = "https://adhesive-modular.preview.emergentagent.com/api"
+BASE_URL = "https://postgres-frontend-v1.preview.emergentagent.com/api"
 ADMIN_EMAIL = "admin@instabiz.com"
 ADMIN_PASSWORD = "adminpassword"
 

@@ -7,7 +7,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://adhesive-modular.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://postgres-frontend-v1.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 TEST_EMAIL = "admin@instabiz.com"

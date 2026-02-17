@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 # Get backend URL from environment
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://adhesive-modular.preview.emergentagent.com"
+    BASE_URL = "https://postgres-frontend-v1.preview.emergentagent.com"
 
 # Test credentials
 TEST_EMAIL = "admin@instabiz.com"
