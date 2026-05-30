@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Idris\\\\Desktop\\\\CLAUDE\\\\Erp\\\\instabiz-erp-unified\" -Force)",
+      "Bash(Select-Object Name, Mode)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Idris\\\\Desktop\\\\CLAUDE\\\\Erp\\\\instabiz-erp-unified\\\\.claude\")",
+      "mcp__Claude_Preview__preview_start",
+      "PowerShell(Get-Command node, npm, yarn, npx -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files\\\\nodejs\", \"$env:APPDATA\\\\npm\", \"$env:LOCALAPPDATA\\\\Programs\\\\node\" -ErrorAction SilentlyContinue | Select-Object FullName)",
+      "Bash(wsl which *)",
+      "Bash(git config *)",
+      "Bash(gh auth *)"
+    ]
+  }
+}

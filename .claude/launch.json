@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Vite)",
+      "runtimeExecutable": "wsl",
+      "runtimeArgs": ["bash", "-ic", "cd /mnt/c/Users/Idris/Desktop/CLAUDE/Erp/instabiz-erp-unified/frontend && npm run start -- --port 5173"],
+      "port": 5173
+    },
+    {
+      "name": "Backend (FastAPI)",
+      "runtimeExecutable": "wsl",
+      "runtimeArgs": ["bash", "-ic", "cd /mnt/c/Users/Idris/Desktop/CLAUDE/Erp/instabiz-erp-unified/backend && /home/luffy/erp-venv/bin/uvicorn server:app --host 0.0.0.0 --port 8000 --reload"],
+      "port": 8000
+    }
+  ]
+}
