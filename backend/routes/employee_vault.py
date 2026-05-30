@@ -25,7 +25,7 @@ from server import db, get_current_user
 
 router = APIRouter()
 
-UPLOAD_DIR = "/tmp/erp_uploads/employee_docs"
+UPLOAD_DIR = "/app/backend/uploads/employee_docs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 

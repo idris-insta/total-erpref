@@ -21,7 +21,7 @@ from server import db, get_current_user
 
 router = APIRouter()
 
-UPLOAD_DIR = "/tmp/erp_uploads/chat"
+UPLOAD_DIR = "/app/uploads/chat"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # ==================== MODELS ====================

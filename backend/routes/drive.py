@@ -22,7 +22,7 @@ from server import db, get_current_user
 
 router = APIRouter()
 
-DRIVE_DIR = "/tmp/erp_uploads/drive"
+DRIVE_DIR = "/app/uploads/drive"
 os.makedirs(DRIVE_DIR, exist_ok=True)
 
 # ==================== MODELS ====================

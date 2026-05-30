@@ -52,9 +52,9 @@ class Machine(BaseModel):
     machine_code: str
     machine_name: str
     machine_type: str
-    capacity_per_hour: Optional[float] = None
-    location: Optional[str] = None
-    status: str = "active"
+    capacity: float
+    location: str
+    status: str
 
 
 @router.post("/work-orders", response_model=WorkOrder)

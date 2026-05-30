@@ -43,16 +43,6 @@ import WarehouseForm from './pages/WarehouseForm';
 import StockRegister from './pages/StockRegister';
 import { StockTransferList, StockTransferForm } from './pages/StockTransfer';
 import { StockAdjustmentList, StockAdjustmentForm } from './pages/StockAdjustment';
-// New feature pages
-import BusinessPulse from './pages/BusinessPulse';
-import Architecture from './pages/Architecture';
-import OODALoop from './pages/OODALoop';
-import Superpowers from './pages/Superpowers';
-// New pages ported from ib-erp-main
-import CustomerAssignment from './pages/CustomerAssignment';
-import TransportManagement from './pages/TransportManagement';
-import BrandingConfig from './pages/BrandingConfig';
-import LeadSalesTeam from './pages/LeadSalesTeam';
 
 
 const PrivateRoute = ({ children }) => {
@@ -115,18 +105,6 @@ const AppRoutes = () => {
                 <Route path="/customer-health" element={<CustomerHealth />} />
                 <Route path="/field-registry" element={<FieldRegistry />} />
                 
-                {/* New feature routes */}
-                <Route path="/business-pulse" element={<BusinessPulse />} />
-                <Route path="/architecture" element={<Architecture />} />
-                <Route path="/ooda" element={<OODALoop />} />
-                <Route path="/superpowers" element={<Superpowers />} />
-
-                {/* ib-erp-main ported routes */}
-                <Route path="/customer-assignment" element={<CustomerAssignment />} />
-                <Route path="/transport" element={<TransportManagement />} />
-                <Route path="/branding" element={<BrandingConfig />} />
-                <Route path="/lead-sales-team" element={<LeadSalesTeam />} />
-
                 {/* Warehouse & Inventory Management Routes */}
                 <Route path="/inventory/warehouses" element={<WarehouseDashboard />} />
                 <Route path="/inventory/warehouses/new" element={<WarehouseForm />} />

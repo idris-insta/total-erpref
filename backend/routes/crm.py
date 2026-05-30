@@ -296,9 +296,9 @@ class ShippingAddress(BaseModel):
 class AccountCreate(BaseModel):
     customer_name: str
     account_type: str = "Customer"
-    gstin: Optional[str] = None
+    gstin: str
     pan: Optional[str] = None
-    billing_address: Optional[str] = None
+    billing_address: str
     billing_city: Optional[str] = None
     billing_state: Optional[str] = None
     billing_pincode: Optional[str] = None
@@ -346,43 +346,39 @@ class AccountUpdate(BaseModel):
 
 class Account(BaseModel):
     id: str
-    customer_name: Optional[str] = None
-    account_type: Optional[str] = "customer"
-    gstin: Optional[str] = None
+    customer_name: str
+    account_type: str
+    gstin: str
     pan: Optional[str] = None
-    billing_address: Optional[str] = None
-    billing_country: Optional[str] = "India"
+    billing_address: str
+    billing_country: str = "India"
     billing_district: Optional[str] = None
+
     billing_city: Optional[str] = None
     billing_state: Optional[str] = None
     billing_pincode: Optional[str] = None
-    shipping_addresses: Optional[List[dict]] = []
-    contacts: Optional[List[dict]] = []
-    contact_persons: Optional[List[dict]] = None
-    credit_limit: Optional[float] = 0
-    credit_days: Optional[int] = 30
-    credit_control: Optional[str] = "warning"
-    payment_terms: Optional[str] = None
+    shipping_addresses: List[dict] = []
+    contacts: List[dict] = []
+    credit_limit: float
+    credit_days: int
+    credit_control: str
+    payment_terms: str
     industry: Optional[str] = None
     website: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    mobile: Optional[str] = None
     agent_id: Optional[str] = None
     salesperson_id: Optional[str] = None
     salesperson_name: Optional[str] = None
     location: Optional[str] = None
     notes: Optional[str] = None
-    is_active: Optional[bool] = True
-    total_outstanding: Optional[float] = 0
-    receivable_amount: Optional[float] = 0
-    payable_amount: Optional[float] = 0
-    avg_payment_days: Optional[float] = 0
-    opening_balance: Optional[float] = 0
+    is_active: bool = True
+    total_outstanding: float = 0
+    receivable_amount: float = 0
+    payable_amount: float = 0
+    avg_payment_days: float = 0
     lead_id: Optional[str] = None
     created_by: Optional[str] = None
     assigned_to: Optional[str] = None
-    created_at: Optional[str] = None
+    created_at: str
     updated_at: Optional[str] = None
 
 # ==================== QUOTATION MODELS ====================

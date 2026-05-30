@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, Factory, ShoppingCart, Calculator, Users, Shield, Settings, Menu, X, LogOut, TrendingUp, Boxes, Wand2, ClipboardCheck, BarChart3, Gauge, Truck, Banknote, Ship, FolderLock, Trophy, Receipt, PieChart, Clock, Layers, FileEdit, Sliders, Brain, ChevronDown, ChevronRight, MessageSquare, HardDrive, Upload, FileText, Zap, Dna, Search, Star, StarOff, Heart, Warehouse, ClipboardList, ArrowRightLeft, Activity, GitBranch, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Package, Factory, ShoppingCart, Calculator, Users, Shield, Settings, Menu, X, LogOut, TrendingUp, Boxes, Wand2, ClipboardCheck, BarChart3, Gauge, Truck, Banknote, Ship, FolderLock, Trophy, Receipt, PieChart, Clock, Layers, FileEdit, Sliders, Brain, ChevronDown, ChevronRight, MessageSquare, HardDrive, Upload, FileText, Zap, Dna, Search, Star, StarOff, Heart, Warehouse, ClipboardList, ArrowRightLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -156,10 +156,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Customer Health', href: '/customer-health', icon: Heart, type: 'link' },
     { name: 'Analytics', href: '/analytics', icon: PieChart, type: 'link' },
     { name: 'AI Dashboard', href: '/ai-dashboard', icon: Brain, type: 'link' },
-    { name: 'Business Pulse', href: '/business-pulse', icon: Activity, type: 'link' },
-    { name: 'OODA Loop', href: '/ooda', icon: GitBranch, type: 'link' },
-    { name: 'Superpowers', href: '/superpowers', icon: Sparkles, type: 'link' },
-    { name: 'Architecture', href: '/architecture', icon: Layers, type: 'link' },
     { name: 'Quality', href: '/quality', icon: Shield, type: 'link' },
     { name: 'Approvals', href: '/approvals', icon: ClipboardCheck, type: 'link' },
     { name: 'Reports', href: '/reports', icon: BarChart3, type: 'link' },

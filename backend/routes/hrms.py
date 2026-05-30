@@ -10,38 +10,37 @@ router = APIRouter()
 class EmployeeCreate(BaseModel):
     employee_code: str
     name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    department: Optional[str] = None
-    designation: Optional[str] = None
-    location: Optional[str] = None
-    date_of_joining: Optional[str] = None
-    shift_timing: Optional[str] = None
-    basic_salary: Optional[float] = 0
-    hra: Optional[float] = 0
-    pf: Optional[float] = 0
-    esi: Optional[float] = 0
-    pt: Optional[float] = 0
+    email: str
+    phone: str
+    department: str
+    designation: str
+    location: str
+    date_of_joining: str
+    shift_timing: str
+    basic_salary: float
+    hra: float
+    pf: float
+    esi: float
+    pt: float
 
 class Employee(BaseModel):
     id: str
-    employee_code: Optional[str] = None
-    name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    department: Optional[str] = None
-    designation: Optional[str] = None
-    location: Optional[str] = None
-    date_of_joining: Optional[str] = None
-    shift_timing: Optional[str] = None
-    basic_salary: Optional[float] = 0
-    hra: Optional[float] = 0
-    pf: Optional[float] = 0
-    esi: Optional[float] = 0
-    pt: Optional[float] = 0
-    status: Optional[str] = "active"
-    created_at: Optional[str] = None
-    employment_type: Optional[str] = None
+    employee_code: str
+    name: str
+    email: str
+    phone: str
+    department: str
+    designation: str
+    location: str
+    date_of_joining: str
+    shift_timing: str
+    basic_salary: float
+    hra: float
+    pf: float
+    esi: float
+    pt: float
+    status: str
+    created_at: str
 
 class AttendanceCreate(BaseModel):
     employee_id: str

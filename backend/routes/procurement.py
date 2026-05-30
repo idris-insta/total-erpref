@@ -78,11 +78,11 @@ class SupplierCreate(BaseModel):
     supplier_code: Optional[str] = None
     supplier_name: str
     supplier_type: str = "Raw Material"
-    contact_person: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    contact_person: str
+    email: str
+    phone: str
     mobile: Optional[str] = None
-    address: Optional[str] = None
+    address: str
     city: Optional[str] = None
     state: Optional[str] = None
     pincode: Optional[str] = None
@@ -120,34 +120,32 @@ class SupplierUpdate(BaseModel):
 class Supplier(BaseModel):
     id: str
     supplier_code: Optional[str] = None
-    supplier_name: Optional[str] = None
-    supplier_type: Optional[str] = None
-    contact_person: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    supplier_name: str
+    supplier_type: str
+    contact_person: str
+    email: str
+    phone: str
     mobile: Optional[str] = None
-    address: Optional[str] = None
+    address: str
     city: Optional[str] = None
     state: Optional[str] = None
     pincode: Optional[str] = None
-    country: Optional[str] = "India"
+    country: str
     gstin: Optional[str] = None
     pan: Optional[str] = None
-    payment_terms: Optional[str] = None
-    credit_limit: Optional[float] = 0
-    credit_days: Optional[int] = 30
+    payment_terms: str
+    credit_limit: float
     bank_name: Optional[str] = None
     bank_account: Optional[str] = None
     ifsc_code: Optional[str] = None
     notes: Optional[str] = None
-    quality_rating: Optional[float] = 0
-    delivery_rating: Optional[float] = 0
-    total_orders: Optional[int] = 0
-    total_value: Optional[float] = 0
-    cumulative_purchase_value: Optional[float] = 0
-    is_active: Optional[bool] = True
-    rating: Optional[int] = None
-    created_at: Optional[str] = None
+    quality_rating: float = 0
+    delivery_rating: float = 0
+    total_orders: int = 0
+    total_value: float = 0
+    cumulative_purchase_value: float = 0  # For TDS/TCS threshold tracking
+    is_active: bool = True
+    created_at: str
     updated_at: Optional[str] = None
 
 # ==================== PURCHASE ORDER MODELS ====================

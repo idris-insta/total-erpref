@@ -71,62 +71,40 @@ class ItemUpdate(BaseModel):
 
 class Item(BaseModel):
     id: str
-    item_code: Optional[str] = None
-    item_name: Optional[str] = None
-    category: Optional[str] = None
-    item_type: Optional[str] = None
-    sub_category: Optional[str] = None
+    item_code: str
+    item_name: str
+    category: str
+    item_type: str
     hsn_code: Optional[str] = None
-    description: Optional[str] = None
-    uom: Optional[str] = "Nos"
-    primary_uom: Optional[str] = "Pcs"
+    uom: str
     secondary_uom: Optional[str] = None
-    alternate_uom: Optional[str] = None
-    conversion_factor: Optional[float] = 1
+    conversion_factor: float = 1
     thickness: Optional[float] = None
-    thickness_microns: Optional[float] = None
     width: Optional[float] = None
-    width_mm: Optional[float] = None
     length: Optional[float] = None
-    length_m: Optional[float] = None
     color: Optional[str] = None
     adhesive_type: Optional[str] = None
     base_material: Optional[str] = None
     grade: Optional[str] = None
     gsm: Optional[float] = None
-    core_diameter: Optional[float] = None
     density: Optional[float] = None
-    purchase_price: Optional[float] = 0
-    cost_price: Optional[float] = None
-    standard_cost: Optional[float] = 0
-    selling_price: Optional[float] = 0
-    min_selling_price: Optional[float] = None
-    min_sale_price: Optional[float] = 0
-    margin_percent: Optional[float] = None
-    mrp: Optional[float] = None
-    last_landed_rate: Optional[float] = 0
-    min_order_qty: Optional[float] = 1
-    min_qty: Optional[float] = 0
-    max_qty: Optional[float] = None
-    reorder_level: Optional[float] = 0
-    reorder_qty: Optional[float] = 0
-    safety_stock: Optional[float] = 0
-    lead_time_days: Optional[int] = 7
+    standard_cost: float = 0
+    selling_price: float = 0
+    min_sale_price: float = 0
+    last_landed_rate: float = 0
+    min_order_qty: float = 1
+    reorder_level: float = 0
+    safety_stock: float = 0
+    lead_time_days: int = 7
     shelf_life_days: Optional[int] = None
     storage_conditions: Optional[str] = None
-    gst_rate: Optional[float] = 18
-    cess_rate: Optional[float] = 0
-    barcode: Optional[str] = None
-    notes: Optional[str] = None
-    is_active: Optional[bool] = True
-    is_batch_tracked: Optional[bool] = False
-    is_serial_tracked: Optional[bool] = False
-    current_stock: Optional[float] = 0
-    stock_qty: Optional[float] = 0
-    stock_kg: Optional[float] = 0
-    stock_sqm: Optional[float] = 0
-    stock_pcs: Optional[int] = 0
-    created_at: Optional[str] = None
+    is_active: bool = True
+    current_stock: float = 0
+    # Dual-UOM Stock (Dimensional Physics Engine)
+    stock_kg: float = 0
+    stock_sqm: float = 0
+    stock_pcs: int = 0
+    created_at: str
     updated_at: Optional[str] = None
 
 # ==================== STOCK MODELS ====================

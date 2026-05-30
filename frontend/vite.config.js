@@ -349,7 +349,7 @@ export default defineConfig({
   },
   esbuild: {
     loader: 'jsx',
-    include: /src\/.*\.jsx?$/,
+    include: /src\/.*\.js$/,
     exclude: [],
   },
   server: {
