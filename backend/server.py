@@ -24,6 +24,10 @@ from repositories.settings import user_repository
 # Import legacy db compatibility layer for routes that still use MongoDB-like syntax
 from core.legacy_db import db
 
+# ── ERPNext integration bridge ──────────────────────────────────────────────
+from core.erpnext_bridge import ping_erpnext, ERPNextCRM, ERPNextSales, ERPNextInventory, ERPNextCustom
+from core.mariadb_db import init_mariadb, close_mariadb, MariaDBReads
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -31,14 +35,20 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler"""
-    # Startup
-    logger.info("Starting up - initializing database...")
+    # Startup — PostgreSQL (legacy) + MariaDB (ERPNext master)
+    logger.info("Starting up — initializing PostgreSQL (legacy)...")
     await init_db()
-    logger.info("Database initialized successfully")
+    logger.info("Starting up — initializing MariaDB (ERPNext master)...")
+    try:
+        await init_mariadb()
+        logger.info("MariaDB (ERPNext) pool ready")
+    except Exception as e:
+        logger.warning(f"MariaDB not available ({e}) — ERPNext bridge will be offline")
     yield
     # Shutdown
-    logger.info("Shutting down - closing database connection...")
+    logger.info("Shutting down — closing connections...")
     await close_db()
+    await close_mariadb()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -313,7 +323,112 @@ async def dashboard_ai_insights(current_user: dict = Depends(get_current_user)):
 @api_router.get("/health")
 async def health_check():
     """Liveness probe for Docker / load balancers"""
-    return {"status": "ok", "version": settings.APP_VERSION}
+    erp_status = await ping_erpnext()
+    return {
+        "status": "ok",
+        "version": settings.APP_VERSION,
+        "erpnext": erp_status.get("status", "unknown"),
+    }
+
+@api_router.get("/erp/health")
+async def erpnext_health():
+    """Detailed ERPNext connectivity check."""
+    return await ping_erpnext()
+
+@api_router.get("/erp/dashboard")
+async def erpnext_dashboard(current_user: dict = Depends(get_current_user)):
+    """
+    Unified dashboard pulling live data directly from ERPNext MariaDB.
+    Replaces dashboard_overview which had broken MongoDB $nin/$ne queries.
+    """
+    from datetime import date
+    month = date.today().strftime("%Y-%m")
+    try:
+        active_leads, customers, monthly_rev, total_rev, low_stock, pending_approvals, lead_funnel, revenue_trend = \
+            await __import__('asyncio').gather(
+                MariaDBReads.count_active_leads(),
+                MariaDBReads.count_customers(),
+                MariaDBReads.monthly_revenue(month),
+                MariaDBReads.total_revenue(),
+                MariaDBReads.count_low_stock_items(),
+                MariaDBReads.count_pending_approvals(),
+                MariaDBReads.lead_funnel(),
+                MariaDBReads.revenue_by_month(6),
+            )
+        return {
+            "source": "erpnext_mariadb",
+            "active_leads":      active_leads,
+            "total_customers":   customers,
+            "monthly_revenue":   float(monthly_rev or 0),
+            "total_revenue":     float(total_rev or 0),
+            "low_stock_items":   low_stock,
+            "pending_approvals": pending_approvals,
+            "lead_funnel":       lead_funnel,
+            "revenue_trend":     revenue_trend,
+        }
+    except Exception as e:
+        logger.warning(f"ERPNext MariaDB dashboard failed ({e}) — returning empty")
+        return {"source": "unavailable", "error": str(e)}
+
+@api_router.get("/erp/leads")
+async def erp_leads(status: Optional[str] = None, limit: int = 200, current_user: dict = Depends(get_current_user)):
+    """Live leads from ERPNext via REST API."""
+    filters = [["custom_status", "=", status]] if status else None
+    return {"leads": await ERPNextCRM.get_leads(filters=filters, limit=limit)}
+
+@api_router.get("/erp/customers")
+async def erp_customers(limit: int = 500, current_user: dict = Depends(get_current_user)):
+    return {"customers": await ERPNextCRM.get_customers(limit=limit)}
+
+@api_router.get("/erp/sales-orders")
+async def erp_sales_orders(status: Optional[str] = None, limit: int = 200, current_user: dict = Depends(get_current_user)):
+    filters = [["status", "=", status]] if status else None
+    return {"sales_orders": await ERPNextSales.get_sales_orders(filters=filters, limit=limit)}
+
+@api_router.get("/erp/invoices")
+async def erp_invoices(status: Optional[str] = None, limit: int = 200, current_user: dict = Depends(get_current_user)):
+    filters = [["status", "=", status]] if status else None
+    return {"invoices": await ERPNextSales.get_sales_invoices(filters=filters, limit=limit)}
+
+@api_router.get("/erp/stock")
+async def erp_stock(warehouse: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    data = await MariaDBReads.stock_summary(warehouse=warehouse)
+    return {"stock": data, "count": len(data)}
+
+@api_router.get("/erp/low-stock")
+async def erp_low_stock(current_user: dict = Depends(get_current_user)):
+    data = await MariaDBReads.low_stock_items()
+    return {"low_stock": data, "count": len(data)}
+
+@api_router.get("/erp/top-customers")
+async def erp_top_customers(limit: int = 10, current_user: dict = Depends(get_current_user)):
+    return {"top_customers": await MariaDBReads.top_customers(limit=limit)}
+
+@api_router.get("/erp/revenue-by-month")
+async def erp_revenue_by_month(months: int = 6, current_user: dict = Depends(get_current_user)):
+    return {"revenue_trend": await MariaDBReads.revenue_by_month(months=months)}
+
+@api_router.get("/erp/customer-board")
+async def erp_customer_board(date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    from datetime import date as dt
+    target_date = date or dt.today().isoformat()
+    data = await MariaDBReads.customer_board(target_date)
+    return {"assignments": data, "date": target_date, "count": len(data)}
+
+@api_router.get("/erp/pdc-due")
+async def erp_pdc_due(days: int = 7, current_user: dict = Depends(get_current_user)):
+    data = await MariaDBReads.pdc_due_soon(days=days)
+    return {"pdc_list": data, "count": len(data)}
+
+@api_router.get("/erp/health-scores")
+async def erp_health_scores(current_user: dict = Depends(get_current_user)):
+    data = await MariaDBReads.customer_health_scores()
+    return {"health_scores": data, "count": len(data)}
+
+@api_router.get("/erp/jumbo-rolls")
+async def erp_jumbo_rolls(status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    data = await MariaDBReads.jumbo_rolls(status=status)
+    return {"jumbo_rolls": data, "count": len(data)}
 
 app.include_router(api_router)
 
