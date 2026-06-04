@@ -255,8 +255,16 @@ function mockApi(method, url) {
   // invoices — must be array (pages do .slice(), .filter())
   if (u.includes('/accounts/invoices')) return mockResolve(MOCK_ACCOUNTS.invoices);
   if (u.includes('/accounts/payments')) return mockResolve(MOCK_ACCOUNTS.payments);
-  if (u.includes('/accounts/reports/aging')) return mockResolve({ buckets: [], summary: {} });
-  if (u.includes('/accounts/reports/gst-summary')) return mockResolve({ summary: {} });
+  if (u.includes('/accounts/reports/aging')) return mockResolve([
+    { customer: 'Ashok Packaging', current: 185000, '1-30': 0, '31-60': 0, '61-90': 0, '90+': 0, total: 185000 },
+    { customer: 'Prime Converters', current: 120000, '1-30': 120000, '31-60': 0, '61-90': 0, '90+': 0, total: 240000 },
+    { customer: 'Star Labels Pvt', current: 0, '1-30': 0, '31-60': 98000, '61-90': 0, '90+': 0, total: 98000 },
+  ]);
+  if (u.includes('/accounts/reports/gst-summary')) return mockResolve({
+    outward_supplies: { count: 23, taxable_value: 4050000, cgst: 185000, sgst: 185000, igst: 510000, total_tax: 880000 },
+    inward_supplies: { count: 12, taxable_value: 1800000, cgst: 75000, sgst: 75000, igst: 200000, total_tax: 350000 },
+    net_tax_payable: 530000, period: '',
+  });
   if (u.includes('/accounts/credit-notes')) return mockResolve([]);
   if (u.includes('/accounts')) return mockResolve(MOCK_ACCOUNTS);
 
@@ -341,7 +349,24 @@ function mockApi(method, url) {
   if (u.includes('/einvoice/pending-invoices')) return mockResolve([]);
   if (u.includes('/einvoice/summary')) return mockResolve({ total: 0, pending: 0, generated: 0 });
   if (u.includes('/einvoice/logs')) return mockResolve([]);
-  if (u.includes('/gst/gstr1')) return mockResolve({ b2b: [], summary: {} });
+  if (u.includes('/gst/gstr1')) return mockResolve({
+    summary: { total_invoices: 23, total_taxable_value: 4050000, total_igst: 510000, total_cgst: 185000, total_sgst: 185000 },
+    tables: {
+      b2b: { count: 18, taxable: 3800000 },
+      b2c_large: { count: 3, taxable: 180000 },
+      b2c_small: { count: 2, taxable: 70000 },
+      cdnr: { count: 0, taxable: 0 },
+      hsn_summary: { data: [] },
+    },
+  });
+  if (u.includes('/gst/gstr3b')) return mockResolve({
+    summary: { total_output_tax: 880000, total_input_tax: 350000, net_tax_liability: 530000 },
+    table_3_1: { details: { a_outward_taxable: { igst: 510000, cgst: 185000, sgst: 185000, cess: 0 } } },
+    table_4: { details: { net_itc: { igst: 200000, cgst: 75000, sgst: 75000, cess: 0 } } },
+    table_6: { tax_payable: { igst: 310000, cgst: 110000, sgst: 110000, cess: 0 } },
+  });
+  if (u.includes('/gst/itc')) return mockResolve({ entries: [], summary: { total_itc: 350000 } });
+  if (u.includes('/gst/hsn-summary')) return mockResolve({ data: [] });
   if (u.includes('/gst/eway-bills')) return mockResolve([]);
   if (u.includes('/gst')) return mockResolve({ records: [] });
 
