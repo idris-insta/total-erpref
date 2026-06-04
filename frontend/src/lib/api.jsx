@@ -177,35 +177,155 @@ function mockResolve(data, delay = 100) {
 function mockApi(method, url) {
   const u = url.toLowerCase();
   if (u.includes('/auth/')) return mockResolve({ token: null, user: MOCK_USER });
-  // dashboard — specific endpoints first
+  // ── DASHBOARD ──────────────────────────────────────────────────────────────
   if (u.includes('/dashboard/revenue-analytics')) return mockResolve(MOCK_REVENUE_ANALYTICS);
   if (u.includes('/dashboard/ai-insights')) return mockResolve({ insights: 'Demo mode — connect Frappe backend for live AI insights.' });
-  if (u.includes('/dashboard/overview') || u.includes('/dashboard')) return mockResolve(MOCK_DASHBOARD_OVERVIEW);
-  // collector quick-actions
+  if (u.includes('/dashboard')) return mockResolve(MOCK_DASHBOARD_OVERVIEW);
+
+  // ── COLLECTOR / AUTONOMOUS ─────────────────────────────────────────────────
+  if (u.includes('/collector/debtors')) return mockResolve({ segments: [], total: 0 });
+  if (u.includes('/collector/reminders')) return mockResolve({ reminders: [] });
+  if (u.includes('/collector/analytics')) return mockResolve({ collected: 0, pending: 0 });
+  if (u.includes('/collector/emergency')) return mockResolve({ emergency_active: false });
   if (u.includes('/collector')) return mockResolve({ actions: [] });
-  if (u.includes('/production/stages') || u.includes('/production-stages')) return mockResolve(MOCK_STAGES);
+
+  // ── PRODUCTION STAGES (specific first) ────────────────────────────────────
+  if (u.includes('/production-stages/dashboard')) return mockResolve({
+    stages: MOCK_STAGES.stages, stage_counts: MOCK_STAGES.stage_counts, total: MOCK_STAGES.total,
+    machines_active: 4, orders_active: 6, wastage_avg: 3.8,
+  });
+  if (u.includes('/production-stages/machines')) return mockResolve(MOCK_MACHINES);
+  if (u.includes('/production-stages/order-sheets')) return mockResolve([]);
+  if (u.includes('/production-stages/sales-orders')) return mockResolve(MOCK_SALES_ORDERS);
+  if (u.includes('/production-stages/stages/')) return mockResolve({ stage: {}, work_orders: [], kpis: {} });
+  if (u.includes('/production-stages/order-sheets/')) return mockResolve({ name: '', items: [], work_orders: [] });
+  if (u.includes('/production-stages/dpr/summary')) return mockResolve({ weeks: [] });
+  if (u.includes('/production-stages/dpr')) return mockResolve({ entries: [] });
+  if (u.includes('/production-stages/work-orders/')) return mockResolve({ name: '', items: [] });
+
+  // ── PRODUCTION ─────────────────────────────────────────────────────────────
+  if (u.includes('/production/work-orders')) return mockResolve(MOCK_SALES_ORDERS);
+  if (u.includes('/production/machines')) return mockResolve(MOCK_MACHINES);
+  if (u.includes('/production/analytics/wastage')) return mockResolve({ wastage_pct: 3.8, by_machine: [] });
+  if (u.includes('/production/production-entries')) return mockResolve([]);
   if (u.includes('/production')) return mockResolve({ orders: MOCK_SALES_ORDERS, total: MOCK_SALES_ORDERS.length });
-  if (u.includes('/inventory/items') || u.includes('/items')) return mockResolve({ items: MOCK_ITEMS, total: MOCK_ITEMS.length });
-  if (u.includes('/inventory/warehouses') || u.includes('/warehouses')) return mockResolve(MOCK_INVENTORY.warehouses);
-  if (u.includes('/inventory') || u.includes('/stock')) return mockResolve(MOCK_INVENTORY);
-  if (u.includes('/machines')) return mockResolve({ machines: MOCK_MACHINES, total: MOCK_MACHINES.length });
-  // CRM components do setX(response.data) directly — return arrays not wrappers
+
+  // ── INVENTORY ──────────────────────────────────────────────────────────────
+  if (u.includes('/inventory/stats/overview') || u.includes('/inventory/stats')) return mockResolve({
+    total_items: 6, low_stock_items: 2, stock_value: 3360000, warehouses: 2,
+  });
+  if (u.includes('/inventory/stock/balance')) return mockResolve(MOCK_ITEMS.filter(i => i.stock < i.reorder));
+  if (u.includes('/inventory/items')) return mockResolve(MOCK_ITEMS);
+  if (u.includes('/inventory-advanced/batches/expiring')) return mockResolve([]);
+  if (u.includes('/inventory-advanced/batches')) return mockResolve([]);
+  if (u.includes('/inventory-advanced/bin-locations')) return mockResolve([]);
+  if (u.includes('/inventory-advanced/reorder-alerts')) return mockResolve({ alerts: [] });
+  if (u.includes('/inventory-advanced/stock-aging')) return mockResolve({ buckets: {} });
+  if (u.includes('/inventory-advanced/stock-valuation')) return mockResolve({ total: 3360000 });
+  if (u.includes('/inventory-advanced/barcode')) return mockResolve(null);
+
+  // ── WAREHOUSE ──────────────────────────────────────────────────────────────
+  if (u.includes('/warehouse/consolidated-stock')) return mockResolve({ stock: MOCK_ITEMS, total_value: 3360000 });
+  if (u.includes('/warehouse/stock-register')) return mockResolve(MOCK_ITEMS);
+  if (u.includes('/warehouse/item-ledger')) return mockResolve({ entries: [] });
+  if (u.includes('/warehouse/stock-transfers')) return mockResolve([]);
+  if (u.includes('/warehouse/stock-adjustments')) return mockResolve([]);
+  if (u.includes('/warehouse/warehouses')) return mockResolve(MOCK_INVENTORY.warehouses);
+
+  // ── CRM ─────────────────────────────────────────────────────────────────────
+  // Components do setX(response.data) — return arrays/objects directly
   if (u.includes('/crm/stats')) return mockResolve({ leads: 24, quotations: 8, accounts: 5, samples: 3 });
-  if (u.includes('/crm/leads') || u.includes('/leads')) return mockResolve(MOCK_LEADS);
+  if (u.includes('/crm/leads/kanban')) return mockResolve({ data: {} });
+  if (u.includes('/crm/users/sales')) return mockResolve([]);
+  if (u.includes('/crm/geo/states')) return mockResolve({ states: [] });
+  if (u.includes('/crm/geo/pincode')) return mockResolve({ country: 'India', state: 'Maharashtra', district: 'Mumbai', city: 'Mumbai' });
+  if (u.includes('/crm/accounts/gst-lookup')) return mockResolve({ valid: false, state_name: '', pan: '' });
+  if (u.includes('/crm/leads')) return mockResolve(MOCK_LEADS);
   if (u.includes('/crm/accounts')) return mockResolve(MOCK_CUSTOMERS);
   if (u.includes('/crm/quotations')) return mockResolve([]);
   if (u.includes('/crm/samples')) return mockResolve([]);
   if (u.includes('/crm')) return mockResolve({ leads: MOCK_LEADS, accounts: MOCK_CUSTOMERS });
-  if (u.includes('/customers')) return mockResolve(MOCK_CUSTOMERS);
+
+  // ── ACCOUNTS / FINANCE ─────────────────────────────────────────────────────
   if (u.includes('/accounts/stats')) return mockResolve(MOCK_ACCOUNTS.stats);
-  if (u.includes('/accounts/invoices') || u.includes('/invoices')) return mockResolve({ invoices: MOCK_ACCOUNTS.invoices, total: MOCK_ACCOUNTS.invoices.length });
-  if (u.includes('/accounts/payments') || u.includes('/payments')) return mockResolve({ payments: MOCK_ACCOUNTS.payments, total: MOCK_ACCOUNTS.payments.length });
+  // invoices — must be array (pages do .slice(), .filter())
+  if (u.includes('/accounts/invoices')) return mockResolve(MOCK_ACCOUNTS.invoices);
+  if (u.includes('/accounts/payments')) return mockResolve(MOCK_ACCOUNTS.payments);
+  if (u.includes('/accounts/reports/aging')) return mockResolve({ buckets: [], summary: {} });
+  if (u.includes('/accounts/reports/gst-summary')) return mockResolve({ summary: {} });
+  if (u.includes('/accounts/credit-notes')) return mockResolve([]);
   if (u.includes('/accounts')) return mockResolve(MOCK_ACCOUNTS);
-  if (u.includes('/hrms') || u.includes('/employees')) return mockResolve({ employees: MOCK_EMPLOYEES, total: MOCK_EMPLOYEES.length });
-  if (u.includes('/scores') || u.includes('/customer-health')) return mockResolve({ customers: MOCK_CUSTOMERS });
+
+  // ── PROCUREMENT ───────────────────────────────────────────────────────────
+  if (u.includes('/procurement/stats')) return mockResolve({ po_count: 4, pending_amount: 280000, suppliers: 8 });
+  if (u.includes('/procurement/purchase-orders/')) return mockResolve({ name: 'PO-DEMO', items: [], supplier: '' });
+  if (u.includes('/procurement/purchase-orders')) return mockResolve([]);
+  if (u.includes('/procurement/suppliers/') && u.includes('/tds')) return mockResolve({ threshold_exceeded: false });
+  if (u.includes('/procurement/suppliers')) return mockResolve([]);
+  if (u.includes('/procurement/geo/pincode')) return mockResolve({ city: 'Mumbai', state: 'Maharashtra', country: 'India' });
+  if (u.includes('/procurement/gstin/validate')) return mockResolve({ valid: false, state: '', pan: '' });
+
+  // ── HRMS ──────────────────────────────────────────────────────────────────
+  if (u.includes('/hrms-enhanced/attendance')) return mockResolve([]);
+  if (u.includes('/hrms/employees')) return mockResolve(MOCK_EMPLOYEES);
+  if (u.includes('/hrms/attendance')) return mockResolve([]);
+  if (u.includes('/hrms/reports')) return mockResolve({ summary: {}, data: [] });
+  if (u.includes('/hrms')) return mockResolve({ employees: MOCK_EMPLOYEES });
+
+  // ── CUSTOMERS / HEALTH ────────────────────────────────────────────────────
+  if (u.includes('/customer-health/scores')) return mockResolve({ scores: MOCK_CUSTOMERS.map(c => ({ ...c, health_score: c.score, health_status: c.score >= 70 ? 'Green' : c.score >= 40 ? 'Amber' : 'Red' })), summary: { avg: 77, green: 3, amber: 1, red: 1 } });
+  if (u.includes('/customer-health')) return mockResolve({ customers: MOCK_CUSTOMERS });
+
+  // ── QUALITY ───────────────────────────────────────────────────────────────
+  if (u.includes('/quality/reports/quality-summary')) return mockResolve({ pass_rate: 96, inspections: 42, failures: 2, open_complaints: 3 });
+  if (u.includes('/quality/inspections')) return mockResolve([]);
+  if (u.includes('/quality/batch-trace')) return mockResolve({ batches: [], trail: [] });
+  if (u.includes('/quality/tds')) return mockResolve([]);
+  if (u.includes('/quality')) return mockResolve({ summary: {} });
+
+  // ── ANALYTICS / REPORTS ──────────────────────────────────────────────────
+  if (u.includes('/analytics/dashboard/kpis')) return mockResolve({ revenue: 4820000, orders: 23, leads: 24, customers: 5 });
+  if (u.includes('/analytics/sales/summary')) return mockResolve({ total: 4820000, by_rep: [], trend: [] });
+  if (u.includes('/analytics/purchases/summary')) return mockResolve({ total: 280000, by_supplier: [] });
+  if (u.includes('/reports/kpis')) return mockResolve({ kpis: [] });
+  if (u.includes('/reports')) return mockResolve({ data: [] });
+
+  // ── BUYING DNA ────────────────────────────────────────────────────────────
+  if (u.includes('/buying-dna')) return mockResolve({ patterns: [], summary: {} });
+
+  // ── E-INVOICE / GST ──────────────────────────────────────────────────────
+  if (u.includes('/einvoice/pending-invoices')) return mockResolve([]);
+  if (u.includes('/einvoice/summary')) return mockResolve({ total: 0, pending: 0, generated: 0 });
+  if (u.includes('/einvoice/logs')) return mockResolve([]);
+  if (u.includes('/gst/gstr1')) return mockResolve({ b2b: [], summary: {} });
+  if (u.includes('/gst/eway-bills')) return mockResolve([]);
+  if (u.includes('/gst')) return mockResolve({ records: [] });
+
+  // ── APPROVALS ────────────────────────────────────────────────────────────
+  if (u.includes('/approvals')) return mockResolve([]);
+
+  // ── FIELD REGISTRY / CUSTOMIZATION ───────────────────────────────────────
+  if (u.includes('/field-registry/modules')) return mockResolve([]);
+  if (u.includes('/field-registry')) return mockResolve({ config: {} });
+  if (u.includes('/customization/custom-fields')) return mockResolve([]);
+  if (u.includes('/customization/report-templates')) return mockResolve([]);
+  if (u.includes('/custom-fields/modules')) return mockResolve([]);
+
+  // ── AI / CHAT / DRIVE ────────────────────────────────────────────────────
+  if (u.includes('/ai/query-history')) return mockResolve([]);
+  if (u.includes('/core/cockpit/pulse')) return mockResolve({ kpis: {} });
+  if (u.includes('/core/cockpit/overrides-pending')) return mockResolve({ pending_overrides: [] });
+  if (u.includes('/core/buying-dna/late-customers')) return mockResolve([]);
+  if (u.includes('/chat')) return mockResolve([]);
+  if (u.includes('/drive')) return mockResolve({ used: 0, total: 10000 });
+  if (u.includes('/documents')) return mockResolve([]);
+
+  // ── POST/PUT/PATCH/DELETE fallback ────────────────────────────────────────
   if (method === 'post' || method === 'put' || method === 'patch' || method === 'delete')
     return mockResolve({ success: true, id: 'DEMO-' + Date.now() });
-  return mockResolve({ data: [], total: 0 });
+
+  // ── safe fallback ─────────────────────────────────────────────────────────
+  return mockResolve([]);
 }
 
 // ── EXPORTED API OBJECT ───────────────────────────────────────────────────────
