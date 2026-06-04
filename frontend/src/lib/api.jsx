@@ -277,7 +277,10 @@ function mockApi(method, url) {
   if (u.includes('/customer-health')) return mockResolve({ customers: MOCK_CUSTOMERS });
 
   // ── QUALITY ───────────────────────────────────────────────────────────────
-  if (u.includes('/quality/reports/quality-summary')) return mockResolve({ pass_rate: 96, inspections: 42, failures: 2, open_complaints: 3 });
+  if (u.includes('/quality/reports/quality-summary')) return mockResolve({
+    inspections: { total: 42, passed: 40, failed: 2, pass_rate: 96, by_type: { 'Incoming': 18, 'In-Process': 15, 'Final': 9 } },
+    complaints: { open: 3, resolved: 8 },
+  });
   if (u.includes('/quality/inspections')) return mockResolve([]);
   if (u.includes('/quality/batch-trace')) return mockResolve({ batches: [], trail: [] });
   if (u.includes('/quality/tds')) return mockResolve([]);
@@ -286,7 +289,20 @@ function mockApi(method, url) {
   // ── ANALYTICS / REPORTS ──────────────────────────────────────────────────
   if (u.includes('/analytics/dashboard/kpis')) return mockResolve({ revenue: 4820000, orders: 23, leads: 24, customers: 5 });
   if (u.includes('/analytics/sales/summary')) return mockResolve({ total: 4820000, by_rep: [], trend: [] });
+  if (u.includes('/analytics/sales/trend')) return mockResolve({ daily: [], weekly: [], monthly: [] });
+  if (u.includes('/analytics/sales/top-products')) return mockResolve({ top_products: [] });
+  if (u.includes('/analytics/sales/top-customers')) return mockResolve({ top_customers: [] });
   if (u.includes('/analytics/purchases/summary')) return mockResolve({ total: 280000, by_supplier: [] });
+  if (u.includes('/analytics/inventory/summary')) return mockResolve({ total_items: 6, total_stock_value: 3360000, low_stock_items: 2, out_of_stock_items: 0 });
+  if (u.includes('/analytics/financial/profit-loss')) return mockResolve({
+    revenue: { total_revenue: 4820000, invoice_count: 23 },
+    cost_of_goods_sold: 2890000,
+    gross_profit: 1930000,
+    gross_margin_percent: 40.0,
+    operating_expenses: { total: 620000 },
+    net_profit: 1310000,
+    net_margin_percent: 27.2,
+  });
   if (u.includes('/reports/kpis')) return mockResolve({ kpis: [] });
   if (u.includes('/reports')) return mockResolve({ data: [] });
 

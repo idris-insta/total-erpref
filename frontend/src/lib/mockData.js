@@ -88,7 +88,21 @@ export const MOCK_EMPLOYEES = [
 ];
 
 export const MOCK_ACCOUNTS = {
-  stats: { total_receivable: 580000, total_payable: 210000, cash_balance: 1240000, overdue: 145000 },
+  stats: {
+    // Accounts.jsx field names (with 's')
+    total_receivables: 580000,
+    total_payables: 210000,
+    net_position: 370000,
+    overdue_invoices: 1,
+    monthly_collections: 320000,
+    monthly_payments: 185000,
+    net_cashflow: 135000,
+    // extra aliases
+    total_receivable: 580000,
+    total_payable: 210000,
+    cash_balance: 1240000,
+    overdue: 145000,
+  },
   invoices: [
     { id: 'INV-2026-0041', customer: 'Ashok Packaging', amount: 185000, due: '2026-06-15', status: 'Unpaid' },
     { id: 'INV-2026-0040', customer: 'Prime Converters', amount: 240000, due: '2026-06-10', status: 'Partial' },
