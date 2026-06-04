@@ -295,7 +295,16 @@ function mockApi(method, url) {
   if (u.includes('/hrms')) return mockResolve({ employees: MOCK_EMPLOYEES });
 
   // ── CUSTOMERS / HEALTH ────────────────────────────────────────────────────
-  if (u.includes('/customer-health/scores')) return mockResolve({ scores: MOCK_CUSTOMERS.map(c => ({ ...c, health_score: c.score, health_status: c.score >= 70 ? 'Green' : c.score >= 40 ? 'Amber' : 'Red' })), summary: { avg: 77, green: 3, amber: 1, red: 1 } });
+  if (u.includes('/customer-health/scores')) return mockResolve({ scores: MOCK_CUSTOMERS.map(c => ({
+    ...c,
+    account_id: c.id,
+    account_name: c.name,      // CustomerHealth.jsx uses .account_name
+    health_score: c.score,
+    health_status: c.score >= 80 ? 'EXCELLENT' : c.score >= 60 ? 'HEALTHY' : c.score >= 40 ? 'AT_RISK' : 'CRITICAL',
+    risk_factors: c.score < 70 ? ['Overdue payment', 'Low order frequency'] : [],
+    recommended_actions: ['Schedule call', 'Review credit terms'],
+    contact_phone: '9876543210',
+  })), summary: { avg_health_score: 76, green: 3, amber: 1, red: 1 } });
   if (u.includes('/customer-health/widget')) return mockResolve({
     summary: { avg_health_score: 76, total_customers: 5, total_at_risk_outstanding: 133000, healthy_count: 3 },
     health_distribution: { EXCELLENT: 1, HEALTHY: 2, AT_RISK: 1, CRITICAL: 1 },
@@ -370,7 +379,14 @@ function mockApi(method, url) {
     table_4: { details: { net_itc: { igst: 200000, cgst: 75000, sgst: 75000, cess: 0 } } },
     table_6: { tax_payable: { igst: 310000, cgst: 110000, sgst: 110000, cess: 0 } },
   });
-  if (u.includes('/gst/itc')) return mockResolve({ entries: [], summary: { total_itc: 350000 } });
+  if (u.includes('/gst/itc')) return mockResolve({
+    entries: [],
+    summary: {
+      total_itc_available: { total: 350000, igst: 200000, cgst: 75000, sgst: 75000 },
+      eligible_itc:        { total: 320000, igst: 185000, cgst: 68000, sgst: 67000 },
+      ineligible_itc:      { total: 30000,  igst: 15000,  cgst: 7000,  sgst: 8000 },
+    },
+  });
   if (u.includes('/gst/hsn-summary')) return mockResolve({ data: [] });
   if (u.includes('/gst/eway-bills')) return mockResolve([]);
   if (u.includes('/gst')) return mockResolve({ records: [] });
@@ -399,6 +415,10 @@ function mockApi(method, url) {
   if (u.includes('/core/cockpit/overrides-pending')) return mockResolve({ pending_overrides: [] });
   if (u.includes('/core/buying-dna/late-customers')) return mockResolve([]);
   if (u.includes('/chat')) return mockResolve([]);
+  if (u.includes('/drive/storage')) return mockResolve({ total_size: 24500000, storage_limit: 10737418240, file_count: 12 });
+  if (u.includes('/drive/folders/')) return mockResolve({ path: [] });   // breadcrumb
+  if (u.includes('/drive/folders')) return mockResolve([]);              // folder list → array
+  if (u.includes('/drive/files')) return mockResolve([]);                // file list → array
   if (u.includes('/drive')) return mockResolve({ used: 0, total: 10000 });
   if (u.includes('/documents')) return mockResolve([]);
 
