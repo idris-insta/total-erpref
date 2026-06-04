@@ -324,7 +324,12 @@ function mockApi(method, url) {
 
   // ── ANALYTICS / REPORTS ──────────────────────────────────────────────────
   if (u.includes('/analytics/dashboard/kpis')) return mockResolve({ revenue: 4820000, orders: 23, leads: 24, customers: 5 });
-  if (u.includes('/analytics/sales/summary')) return mockResolve({ total: 4820000, by_rep: [], trend: [] });
+  if (u.includes('/analytics/sales/summary')) return mockResolve({
+    current_period: { total_sales: 4820000, invoice_count: 23, average_order_value: 209565 },
+    previous_period: { total_sales: 3950000, invoice_count: 19, average_order_value: 207894 },
+    growth: { sales_growth_percent: 22.0, sales_growth_amount: 870000 },
+    by_rep: [], trend: [],
+  });
   if (u.includes('/analytics/sales/trend')) return mockResolve({ daily: [], weekly: [], monthly: [] });
   if (u.includes('/analytics/sales/top-products')) return mockResolve({ top_products: [] });
   if (u.includes('/analytics/sales/top-customers')) return mockResolve({ top_customers: [] });
