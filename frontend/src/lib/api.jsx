@@ -206,7 +206,11 @@ function mockApi(method, url) {
   // ── PRODUCTION ─────────────────────────────────────────────────────────────
   if (u.includes('/production/work-orders')) return mockResolve(MOCK_SALES_ORDERS);
   if (u.includes('/production/machines')) return mockResolve(MOCK_MACHINES);
-  if (u.includes('/production/analytics/wastage')) return mockResolve({ wastage_pct: 3.8, by_machine: [] });
+  if (u.includes('/production/analytics/wastage')) return mockResolve([
+    { machine: 'COAT-BWD-001', wastage_percentage: 8.4, date: '2026-06-04' },
+    { machine: 'SLIT-SGM-001', wastage_percentage: 3.1, date: '2026-06-04' },
+    { machine: 'PRINT-BWD-002', wastage_percentage: 5.2, date: '2026-06-04' },
+  ]);
   if (u.includes('/production/production-entries')) return mockResolve([]);
   if (u.includes('/production')) return mockResolve({ orders: MOCK_SALES_ORDERS, total: MOCK_SALES_ORDERS.length });
 
@@ -267,8 +271,18 @@ function mockApi(method, url) {
 
   // ── HRMS ──────────────────────────────────────────────────────────────────
   if (u.includes('/hrms-enhanced/attendance')) return mockResolve([]);
+  if (u.includes('/hrms-enhanced/leave-applications')) return mockResolve([]);
+  if (u.includes('/hrms-enhanced/leave-types')) return mockResolve([]);
+  if (u.includes('/hrms-enhanced/loans')) return mockResolve([]);
+  if (u.includes('/hrms-enhanced/payroll')) return mockResolve([]);
+  if (u.includes('/hrms-enhanced/salary-slips')) return mockResolve([]);
+  if (u.includes('/hrms-enhanced')) return mockResolve([]);
   if (u.includes('/hrms/employees')) return mockResolve(MOCK_EMPLOYEES);
   if (u.includes('/hrms/attendance')) return mockResolve([]);
+  if (u.includes('/hrms/leave-requests')) return mockResolve([]);
+  if (u.includes('/hrms/leave-types')) return mockResolve([]);
+  if (u.includes('/hrms/payroll')) return mockResolve([]);
+  if (u.includes('/hrms/salary-slips')) return mockResolve([]);
   if (u.includes('/hrms/reports')) return mockResolve({ summary: {}, data: [] });
   if (u.includes('/hrms')) return mockResolve({ employees: MOCK_EMPLOYEES });
 
@@ -278,9 +292,14 @@ function mockApi(method, url) {
     summary: { avg_health_score: 76, total_customers: 5, total_at_risk_outstanding: 133000, healthy_count: 3 },
     health_distribution: { EXCELLENT: 1, HEALTHY: 2, AT_RISK: 1, CRITICAL: 1 },
     attention_needed: MOCK_CUSTOMERS.filter(c => c.score < 70).map(c => ({
-      ...c, health_score: c.score, health_status: 'AT_RISK',
+      account_id: c.id,
+      account_name: c.name,
+      health_score: c.score,
+      health_status: 'AT_RISK',
+      risk_factors: ['Overdue payment', 'Low order frequency'],
       recommended_actions: ['Schedule follow-up call', 'Review payment terms'],
       contact_phone: '9876543210',
+      outstanding: c.outstanding,
     })),
   });
   if (u.includes('/customer-health')) return mockResolve({ customers: MOCK_CUSTOMERS });
