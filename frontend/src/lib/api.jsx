@@ -274,6 +274,15 @@ function mockApi(method, url) {
 
   // ── CUSTOMERS / HEALTH ────────────────────────────────────────────────────
   if (u.includes('/customer-health/scores')) return mockResolve({ scores: MOCK_CUSTOMERS.map(c => ({ ...c, health_score: c.score, health_status: c.score >= 70 ? 'Green' : c.score >= 40 ? 'Amber' : 'Red' })), summary: { avg: 77, green: 3, amber: 1, red: 1 } });
+  if (u.includes('/customer-health/widget')) return mockResolve({
+    summary: { avg_health_score: 76, total_customers: 5, total_at_risk_outstanding: 133000, healthy_count: 3 },
+    health_distribution: { EXCELLENT: 1, HEALTHY: 2, AT_RISK: 1, CRITICAL: 1 },
+    attention_needed: MOCK_CUSTOMERS.filter(c => c.score < 70).map(c => ({
+      ...c, health_score: c.score, health_status: 'AT_RISK',
+      recommended_actions: ['Schedule follow-up call', 'Review payment terms'],
+      contact_phone: '9876543210',
+    })),
+  });
   if (u.includes('/customer-health')) return mockResolve({ customers: MOCK_CUSTOMERS });
 
   // ── QUALITY ───────────────────────────────────────────────────────────────
@@ -326,6 +335,14 @@ function mockApi(method, url) {
   if (u.includes('/customization/custom-fields')) return mockResolve([]);
   if (u.includes('/customization/report-templates')) return mockResolve([]);
   if (u.includes('/custom-fields/modules')) return mockResolve([]);
+
+  // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
+  if (u.includes('/notifications/notifications/count')) return mockResolve({ unread_count: 3 });
+  if (u.includes('/notifications/notifications')) return mockResolve([
+    { id: 1, title: 'Low Stock Alert', message: 'OPP Film 30µ below reorder level', type: 'warning', read: false, created_at: '2026-06-04T09:00:00Z' },
+    { id: 2, title: 'Overdue Invoice', message: 'INV-2026-0039 from Star Labels is 7 days overdue', type: 'alert', read: false, created_at: '2026-06-03T14:00:00Z' },
+    { id: 3, title: 'Payroll Due', message: 'June payroll processing due by 28th', type: 'info', read: false, created_at: '2026-06-02T10:00:00Z' },
+  ]);
 
   // ── AI / CHAT / DRIVE ────────────────────────────────────────────────────
   if (u.includes('/ai/query-history')) return mockResolve([]);
