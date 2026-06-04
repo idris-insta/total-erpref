@@ -1,5 +1,23 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{padding:40,fontFamily:'monospace',background:'#fff',minHeight:'100vh'}}>
+          <h2 style={{color:'red'}}>React Crash — error boundary caught:</h2>
+          <pre style={{background:'#f4f4f4',padding:16,borderRadius:4,overflow:'auto',fontSize:13}}>
+            {this.state.error?.message}{'\n\n'}{this.state.error?.stack}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'sonner';
 import Login from './pages/Login';
@@ -43,6 +61,11 @@ import WarehouseForm from './pages/WarehouseForm';
 import StockRegister from './pages/StockRegister';
 import { StockTransferList, StockTransferForm } from './pages/StockTransfer';
 import { StockAdjustmentList, StockAdjustmentForm } from './pages/StockAdjustment';
+// New pages ported from ib-erp-main / instabiz-develop
+import CustomerAssignment from './pages/CustomerAssignment';
+import TransportManagement from './pages/TransportManagement';
+import BrandingConfig from './pages/BrandingConfig';
+import LeadSalesTeam from './pages/LeadSalesTeam';
 
 
 const PrivateRoute = ({ children }) => {
@@ -105,6 +128,12 @@ const AppRoutes = () => {
                 <Route path="/customer-health" element={<CustomerHealth />} />
                 <Route path="/field-registry" element={<FieldRegistry />} />
                 
+                {/* ib-erp-main / instabiz-develop ported routes */}
+                <Route path="/customer-assignment" element={<CustomerAssignment />} />
+                <Route path="/transport" element={<TransportManagement />} />
+                <Route path="/branding" element={<BrandingConfig />} />
+                <Route path="/lead-sales-team" element={<LeadSalesTeam />} />
+
                 {/* Warehouse & Inventory Management Routes */}
                 <Route path="/inventory/warehouses" element={<WarehouseDashboard />} />
                 <Route path="/inventory/warehouses/new" element={<WarehouseForm />} />
@@ -125,12 +154,14 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-        <Toaster position="top-right" richColors />
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster position="top-right" richColors />
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

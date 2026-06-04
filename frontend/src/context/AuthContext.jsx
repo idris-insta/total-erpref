@@ -1,61 +1,81 @@
+/**
+ * AuthContext — Frappe auth integration
+ *
+ * DEMO_MODE=true  → auto-login as DEMO_USER, no backend needed
+ * DEMO_MODE=false → real Frappe login via POST /api/method/login
+ *                   Frappe uses cookie (sid) — no JWT token storage
+ */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../lib/api';
+import axios from 'axios';
+
+const DEMO_MODE = true;
+const FRAPPE_URL = import.meta.env.VITE_BACKEND_URL || 'http://172.30.52.244:8000';
+
+const DEMO_USER = {
+  id: 1,
+  name: 'Idris (Admin)',
+  email: 'admin@instabiz.in',
+  role: 'System Manager',
+  full_name: 'Idris',
+};
 
 const AuthContext = createContext(null);
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be inside AuthProvider');
+  return ctx;
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(DEMO_MODE ? DEMO_USER : null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
-      api.get('/auth/me')
-        .then(response => {
-          setUser(response.data);
-          localStorage.setItem('user', JSON.stringify(response.data));
-        })
-        .catch(() => {
-          logout();
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    if (DEMO_MODE) return;
+    // Check existing Frappe session (cookie-based)
+    setLoading(true);
+    axios
+      .get(`${FRAPPE_URL}/api/method/frappe.auth.get_logged_user`, { withCredentials: true })
+      .then((r) => {
+        const email = r.data.message;
+        if (email && email !== 'Guest') {
+          setUser({ email, name: email, role: 'admin' });
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
-    const { token, user: userData } = response.data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    if (DEMO_MODE) { setUser(DEMO_USER); return DEMO_USER; }
+    // Frappe login
+    const r = await axios.post(
+      `${FRAPPE_URL}/api/method/login`,
+      { usr: email, pwd: password },
+      { withCredentials: true }
+    );
+    const userData = {
+      email,
+      name: r.data.full_name || email,
+      role: r.data.user_type || 'admin',
+    };
     setUser(userData);
     return userData;
   };
 
-  const register = async (email, password, name, role) => {
-    const response = await api.post('/auth/register', { email, password, name, role });
-    const { token, user: userData } = response.data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    return userData;
+  const register = async () => {
+    throw new Error('User creation must be done via Frappe → System Settings → User.');
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const logout = async () => {
+    if (!DEMO_MODE) {
+      try {
+        await axios.get(`${FRAPPE_URL}/api/method/logout`, { withCredentials: true });
+      } catch (_) {}
+    }
     setUser(null);
   };
 
