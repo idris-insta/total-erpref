@@ -12,7 +12,7 @@ import {
   Clock, RefreshCw, Calendar, Plus, Eye, Printer
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+import api from '../lib/api';
 
 const PayrollPage = () => {
   const [payrolls, setPayrolls] = useState([]);
@@ -47,12 +47,11 @@ const PayrollPage = () => {
     setLoading(true);
     try {
       const [payrollRes, empRes] = await Promise.all([
-        fetch(`${API_URL}/api/payroll/?payroll_month=${selectedMonth}`, { headers }),
-        fetch(`${API_URL}/api/hrms/employees`, { headers })
+        api.get(`/payroll/?payroll_month=${selectedMonth}`),
+        api.get('/hrms/employees'),
       ]);
-
-      if (payrollRes.ok) setPayrolls(await payrollRes.json());
-      if (empRes.ok) setEmployees(await empRes.json());
+      setPayrolls(Array.isArray(payrollRes.data) ? payrollRes.data : []);
+      setEmployees(Array.isArray(empRes.data) ? empRes.data : (empRes.data?.employees || []));
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -65,30 +64,19 @@ const PayrollPage = () => {
 
   const handleProcessPayroll = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/payroll/process`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(newPayroll)
-      });
-
-      if (response.ok) {
-        setShowProcessPayroll(false);
-        fetchData();
-      } else {
-        const error = await response.json();
-        alert(error.detail || 'Error processing payroll');
-      }
+      await api.post('/payroll/process', newPayroll);
+      setShowProcessPayroll(false);
+      fetchData();
     } catch (error) {
-      console.error('Error processing payroll:', error);
+      alert(error?.response?.data?.detail || 'Error processing payroll');
     }
   };
 
   const handleViewPayslip = async (payrollId) => {
     try {
-      const response = await fetch(`${API_URL}/api/payroll/${payrollId}/payslip`, { headers });
-      if (response.ok) {
-        const data = await response.json();
-        setPayslipData(data);
+      const response = await api.get(`/payroll/${payrollId}/payslip`);
+      if (response?.data) {
+        setPayslipData(response.data);
         setShowPayslip(true);
       }
     } catch (error) {
@@ -98,27 +86,16 @@ const PayrollPage = () => {
 
   const handleApprove = async (payrollId) => {
     try {
-      const response = await fetch(`${API_URL}/api/payroll/${payrollId}/approve`, {
-        method: 'PUT',
-        headers
-      });
-      if (response.ok) {
-        fetchData();
-      } else {
-        const error = await response.json();
-        alert(error.detail || 'Error approving payroll');
-      }
+      await api.put(`/payroll/${payrollId}/approve`);
+      fetchData();
     } catch (error) {
-      console.error('Error approving payroll:', error);
+      alert(error?.response?.data?.detail || 'Error approving payroll');
     }
   };
 
   const handleMarkPaid = async (payrollId) => {
     try {
-      await fetch(`${API_URL}/api/payroll/${payrollId}/mark-paid`, {
-        method: 'PUT',
-        headers
-      });
+      await api.put(`/payroll/${payrollId}/mark-paid`);
       fetchData();
     } catch (error) {
       console.error('Error marking payroll as paid:', error);

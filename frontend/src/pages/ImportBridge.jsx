@@ -12,7 +12,7 @@ import {
   Globe, RefreshCw, TrendingUp, Package, Anchor
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+import api from '../lib/api';
 
 const ImportBridge = () => {
   const [importPOs, setImportPOs] = useState([]);
@@ -65,12 +65,11 @@ const ImportBridge = () => {
     setLoading(true);
     try {
       const [posRes, ratesRes] = await Promise.all([
-        fetch(`${API_URL}/api/imports/purchase-orders`, { headers }),
-        fetch(`${API_URL}/api/imports/exchange-rates`, { headers })
+        api.get('/imports/purchase-orders'),
+        api.get('/imports/exchange-rates'),
       ]);
-
-      if (posRes.ok) setImportPOs(await posRes.json());
-      if (ratesRes.ok) setExchangeRates(await ratesRes.json());
+      setImportPOs(Array.isArray(posRes.data) ? posRes.data : []);
+      setExchangeRates(ratesRes.data && !Array.isArray(ratesRes.data) ? ratesRes.data : null);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -83,16 +82,9 @@ const ImportBridge = () => {
 
   const handleCreatePO = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/imports/purchase-orders`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(newPO)
-      });
-
-      if (response.ok) {
-        setShowNewPO(false);
-        fetchData();
-      }
+      await api.post('/imports/purchase-orders', newPO);
+      setShowNewPO(false);
+      fetchData();
     } catch (error) {
       console.error('Error creating import PO:', error);
     }
@@ -100,16 +92,8 @@ const ImportBridge = () => {
 
   const handleCalculateLanding = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/imports/landing-cost`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ ...landingCost, import_po_id: selectedPO.id })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setLandingCostResult(result);
-      }
+      const response = await api.post('/imports/landing-cost', { ...landingCost, import_po_id: selectedPO.id });
+      if (response?.data) setLandingCostResult(response.data);
     } catch (error) {
       console.error('Error calculating landing cost:', error);
     }
@@ -117,17 +101,11 @@ const ImportBridge = () => {
 
   const handleFinalizeLanding = async (costId) => {
     try {
-      const response = await fetch(`${API_URL}/api/imports/landing-cost/${costId}/finalize`, {
-        method: 'PUT',
-        headers
-      });
-
-      if (response.ok) {
-        alert('Landing cost finalized! MSP updated for all items.');
-        setShowLandingCost(false);
-        setLandingCostResult(null);
-        fetchData();
-      }
+      await api.put(`/imports/landing-cost/${costId}/finalize`);
+      alert('Landing cost finalized! MSP updated for all items.');
+      setShowLandingCost(false);
+      setLandingCostResult(null);
+      fetchData();
     } catch (error) {
       console.error('Error finalizing landing cost:', error);
     }

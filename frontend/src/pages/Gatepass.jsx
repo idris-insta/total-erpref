@@ -12,7 +12,7 @@ import {
   CheckCircle, Clock, Package, User, Phone, FileText, RefreshCw
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+import api from '../lib/api';
 
 const Gatepass = () => {
   const [gatepasses, setGatepasses] = useState([]);
@@ -56,14 +56,13 @@ const Gatepass = () => {
     setLoading(true);
     try {
       const [gpRes, transRes, whRes] = await Promise.all([
-        fetch(`${API_URL}/api/gatepass/`, { headers }),
-        fetch(`${API_URL}/api/gatepass/transporters`, { headers }),
-        fetch(`${API_URL}/api/inventory/warehouses`, { headers })
+        api.get('/gatepass/'),
+        api.get('/gatepass/transporters'),
+        api.get('/inventory/warehouses'),
       ]);
-
-      if (gpRes.ok) setGatepasses(await gpRes.json());
-      if (transRes.ok) setTransporters(await transRes.json());
-      if (whRes.ok) setWarehouses(await whRes.json());
+      setGatepasses(Array.isArray(gpRes.data) ? gpRes.data : []);
+      setTransporters(Array.isArray(transRes.data) ? transRes.data : []);
+      setWarehouses(Array.isArray(whRes.data) ? whRes.data : (whRes.data?.warehouses || []));
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -76,13 +75,8 @@ const Gatepass = () => {
 
   const handleCreateGatepass = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/gatepass/`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(newGatepass)
-      });
-
-      if (response.ok) {
+      const response = await api.post('/gatepass/', newGatepass);
+      if (response) {
         setShowNewGatepass(false);
         setNewGatepass({
           gatepass_type: 'inward',
@@ -107,13 +101,8 @@ const Gatepass = () => {
 
   const handleCreateTransporter = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/gatepass/transporters`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(newTransporter)
-      });
-
-      if (response.ok) {
+      const response = await api.post('/gatepass/transporters', newTransporter);
+      if (response) {
         setShowNewTransporter(false);
         setNewTransporter({
           transporter_name: '',
@@ -133,10 +122,7 @@ const Gatepass = () => {
 
   const handleApprove = async (id) => {
     try {
-      await fetch(`${API_URL}/api/gatepass/${id}/approve`, {
-        method: 'PUT',
-        headers
-      });
+      await api.put(`/gatepass/${id}/approve`);
       fetchData();
     } catch (error) {
       console.error('Error approving gatepass:', error);
@@ -145,10 +131,7 @@ const Gatepass = () => {
 
   const handleComplete = async (id) => {
     try {
-      await fetch(`${API_URL}/api/gatepass/${id}/complete`, {
-        method: 'PUT',
-        headers
-      });
+      await api.put(`/gatepass/${id}/complete`);
       fetchData();
     } catch (error) {
       console.error('Error completing gatepass:', error);

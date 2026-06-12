@@ -12,7 +12,7 @@ import {
   Plus, RefreshCw, Award, Medal, Crown, Star
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+import api from '../lib/api';
 
 const SalesIncentives = () => {
   const [targets, setTargets] = useState([]);
@@ -41,18 +41,18 @@ const SalesIncentives = () => {
     setLoading(true);
     try {
       const [targetsRes, slabsRes, payoutsRes, leaderboardRes, empRes] = await Promise.all([
-        fetch(`${API_URL}/api/sales-incentives/targets?period=${selectedPeriod}`, { headers }),
-        fetch(`${API_URL}/api/sales-incentives/slabs`, { headers }),
-        fetch(`${API_URL}/api/sales-incentives/payouts?period=${selectedPeriod}`, { headers }),
-        fetch(`${API_URL}/api/sales-incentives/leaderboard?period=${selectedPeriod}`, { headers }),
-        fetch(`${API_URL}/api/hrms/employees`, { headers })
+        api.get(`/sales-incentives/targets?period=${selectedPeriod}`),
+        api.get(`/sales-incentives/slabs`),
+        api.get(`/sales-incentives/payouts?period=${selectedPeriod}`),
+        api.get(`/sales-incentives/leaderboard?period=${selectedPeriod}`),
+        api.get(`/hrms/employees`),
       ]);
 
-      if (targetsRes.ok) setTargets(await targetsRes.json());
-      if (slabsRes.ok) setSlabs(await slabsRes.json());
-      if (payoutsRes.ok) setPayouts(await payoutsRes.json());
-      if (leaderboardRes.ok) setLeaderboard(await leaderboardRes.json());
-      if (empRes.ok) setEmployees(await empRes.json());
+      setTargets(Array.isArray(targetsRes.data) ? targetsRes.data : []);
+      setSlabs(Array.isArray(slabsRes.data) ? slabsRes.data : []);
+      setPayouts(Array.isArray(payoutsRes.data) ? payoutsRes.data : []);
+      setLeaderboard(Array.isArray(leaderboardRes.data) ? leaderboardRes.data : []);
+      setEmployees(Array.isArray(empRes.data) ? empRes.data : (empRes.data?.employees || []));
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -65,16 +65,9 @@ const SalesIncentives = () => {
 
   const handleCreateTarget = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/sales-incentives/targets`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(newTarget)
-      });
-
-      if (response.ok) {
-        setShowNewTarget(false);
-        fetchData();
-      }
+      await api.post('/sales-incentives/targets', newTarget);
+      setShowNewTarget(false);
+      fetchData();
     } catch (error) {
       console.error('Error creating target:', error);
     }
@@ -82,14 +75,8 @@ const SalesIncentives = () => {
 
   const handleCalculateIncentive = async (targetId) => {
     try {
-      const response = await fetch(`${API_URL}/api/sales-incentives/calculate/${targetId}`, {
-        method: 'POST',
-        headers
-      });
-
-      if (response.ok) {
-        fetchData();
-      }
+      await api.post(`/sales-incentives/calculate/${targetId}`);
+      fetchData();
     } catch (error) {
       console.error('Error calculating incentive:', error);
     }

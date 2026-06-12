@@ -6,7 +6,7 @@ import {
   Gauge, Truck, Banknote, Ship, FolderLock, Trophy, Receipt, PieChart, Clock,
   Layers, FileEdit, Sliders, Brain, ChevronDown, ChevronRight, MessageSquare,
   HardDrive, Upload, FileText, Zap, Dna, Search, Star, StarOff, Heart, Warehouse,
-  ClipboardList, ArrowRightLeft,
+  ClipboardList, ArrowRightLeft, Activity, GitBranch, Sparkles, Network,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
@@ -108,6 +108,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, type: 'link' },
     { name: 'Director Center', href: '/director', icon: Gauge, type: 'link' },
+    { name: 'Business Pulse', href: '/business-pulse', icon: Activity, type: 'link' },
+    { name: 'OODA Loop', href: '/ooda', icon: GitBranch, type: 'link' },
+    { name: 'Superpowers', href: '/superpowers', icon: Sparkles, type: 'link' },
+    { name: 'Architecture', href: '/architecture', icon: Network, type: 'link' },
     { name: 'CRM', href: '/crm', icon: TrendingUp, type: 'link' },
     {
       name: 'Inventory', icon: Boxes, type: 'group',

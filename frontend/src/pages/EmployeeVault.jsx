@@ -12,7 +12,7 @@ import {
   Laptop, Car, CreditCard, RefreshCw, Eye, Trash2, Shield
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+import api from '../lib/api';
 
 const EmployeeVault = () => {
   const [employees, setEmployees] = useState([]);
@@ -54,17 +54,13 @@ const EmployeeVault = () => {
     setLoading(true);
     try {
       const [empRes, typesRes, expiringRes] = await Promise.all([
-        fetch(`${API_URL}/api/hrms/employees`, { headers }),
-        fetch(`${API_URL}/api/employee-vault/document-types`, { headers }),
-        fetch(`${API_URL}/api/employee-vault/documents/expiring?days=30`, { headers })
+        api.get('/hrms/employees'),
+        api.get('/employee-vault/document-types'),
+        api.get('/employee-vault/documents/expiring?days=30'),
       ]);
-
-      if (empRes.ok) setEmployees(await empRes.json());
-      if (typesRes.ok) {
-        const data = await typesRes.json();
-        setDocumentTypes(data.document_types || []);
-      }
-      if (expiringRes.ok) setExpiringDocs(await expiringRes.json());
+      setEmployees(Array.isArray(empRes.data) ? empRes.data : (empRes.data?.employees || []));
+      setDocumentTypes(typesRes.data?.document_types || (Array.isArray(typesRes.data) ? typesRes.data : []));
+      setExpiringDocs(Array.isArray(expiringRes.data) ? expiringRes.data : []);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -73,11 +69,8 @@ const EmployeeVault = () => {
 
   const fetchVaultSummary = async (employeeId) => {
     try {
-      const response = await fetch(`${API_URL}/api/employee-vault/${employeeId}/vault-summary`, { headers });
-      if (response.ok) {
-        const data = await response.json();
-        setVaultSummary(data);
-      }
+      const response = await api.get(`/employee-vault/${employeeId}/vault-summary`);
+      if (response?.data) setVaultSummary(response.data);
     } catch (error) {
       console.error('Error fetching vault summary:', error);
     }
@@ -102,13 +95,8 @@ const EmployeeVault = () => {
         if (value) formData.append(key, value);
       });
 
-      const response = await fetch(`${API_URL}/api/employee-vault/documents`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-
-      if (response.ok) {
+      const response = await api.post('/employee-vault/documents', formData);
+      if (response) {
         setShowUpload(false);
         fetchVaultSummary(selectedEmployee.id);
         setNewDocument({
@@ -128,13 +116,8 @@ const EmployeeVault = () => {
 
   const handleAssignAsset = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/employee-vault/assets`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAsset)
-      });
-
-      if (response.ok) {
+      const response = await api.post('/employee-vault/assets', newAsset);
+      if (response) {
         setShowAsset(false);
         fetchVaultSummary(selectedEmployee.id);
         setNewAsset({
@@ -156,10 +139,7 @@ const EmployeeVault = () => {
 
   const handleVerifyDocument = async (docId) => {
     try {
-      await fetch(`${API_URL}/api/employee-vault/documents/${docId}/verify`, {
-        method: 'PUT',
-        headers
-      });
+      await api.put(`/employee-vault/documents/${docId}/verify`);
       fetchVaultSummary(selectedEmployee.id);
     } catch (error) {
       console.error('Error verifying document:', error);
@@ -168,10 +148,7 @@ const EmployeeVault = () => {
 
   const handleReturnAsset = async (assetId) => {
     try {
-      await fetch(`${API_URL}/api/employee-vault/assets/${assetId}/return?condition=good`, {
-        method: 'PUT',
-        headers
-      });
+      await api.put(`/employee-vault/assets/${assetId}/return?condition=good`);
       fetchVaultSummary(selectedEmployee.id);
     } catch (error) {
       console.error('Error returning asset:', error);

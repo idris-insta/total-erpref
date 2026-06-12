@@ -214,8 +214,8 @@ const StockRegister = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredStock.map((item) => (
-                    <React.Fragment key={item._id?.item_id || item.item_id}>
+                  filteredStock.map((item, idx) => (
+                    <React.Fragment key={item._id?.item_id || item.item_id || item.id || idx}>
                       <tr className="border-b hover:bg-slate-50">
                         <td className="p-3">
                           <div className="flex items-center gap-2">

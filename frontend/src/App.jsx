@@ -66,6 +66,11 @@ import CustomerAssignment from './pages/CustomerAssignment';
 import TransportManagement from './pages/TransportManagement';
 import BrandingConfig from './pages/BrandingConfig';
 import LeadSalesTeam from './pages/LeadSalesTeam';
+import OODALoop from './pages/OODALoop';
+import BusinessPulse from './pages/BusinessPulse';
+import Superpowers from './pages/Superpowers';
+import Architecture from './pages/Architecture';
+import LeadsPage from './pages/LeadsPage';
 
 
 const PrivateRoute = ({ children }) => {
@@ -127,6 +132,11 @@ const AppRoutes = () => {
                 <Route path="/buying-dna" element={<BuyingDNA />} />
                 <Route path="/customer-health" element={<CustomerHealth />} />
                 <Route path="/field-registry" element={<FieldRegistry />} />
+                <Route path="/ooda" element={<OODALoop />} />
+                <Route path="/business-pulse" element={<BusinessPulse />} />
+                <Route path="/superpowers" element={<Superpowers />} />
+                <Route path="/architecture" element={<Architecture />} />
+                <Route path="/leads" element={<LeadsPage />} />
                 
                 {/* ib-erp-main / instabiz-develop ported routes */}
                 <Route path="/customer-assignment" element={<CustomerAssignment />} />

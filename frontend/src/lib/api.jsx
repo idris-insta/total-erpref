@@ -26,8 +26,11 @@ import {
 } from './mockData';
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const DEMO_MODE = true;   // ← set false when Frappe server is reachable
+// DEMO_MODE: env-driven. Set VITE_DEMO_MODE=false in .env to go live against Frappe.
+const DEMO_MODE = (import.meta.env.VITE_DEMO_MODE ?? 'true') !== 'false';
 const FRAPPE_URL = (import.meta.env.VITE_BACKEND_URL || 'http://172.30.52.244:8000');
+// When live, fall back to mock data if a Frappe endpoint is missing/unreachable
+const MOCK_FALLBACK = (import.meta.env.VITE_MOCK_FALLBACK ?? 'true') !== 'false';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── FRAPPE AXIOS INSTANCE ─────────────────────────────────────────────────────
@@ -422,6 +425,62 @@ function mockApi(method, url) {
   if (u.includes('/drive')) return mockResolve({ used: 0, total: 10000 });
   if (u.includes('/documents')) return mockResolve([]);
 
+  // ── gatepass ──────────────────────────────────────────────────────────────
+  if (u.includes('/gatepass/transporters')) return mockResolve([
+    { id: 'TR-001', transporter_name: 'VRL Logistics', contact_person: 'Mahesh', phone: '9822001100', gstin: '27AAVRL1234A1Z1', city: 'Mumbai', state: 'Maharashtra' },
+    { id: 'TR-002', transporter_name: 'Gati Express', contact_person: 'Suraj', phone: '9833002211', gstin: '24AAGAT5678B2Z2', city: 'Surat', state: 'Gujarat' },
+  ]);
+  if (u.includes('/gatepass')) return mockResolve([
+    { id: 'GP-001', gatepass_no: 'GP-2026-0012', gatepass_type: 'outward', reference_type: 'DN', vehicle_no: 'MH43AJ5555', driver_name: 'Ravi', party_name: 'Ashok Packaging', status: 'approved', created_at: '2026-06-11T10:00:00' },
+    { id: 'GP-002', gatepass_no: 'GP-2026-0013', gatepass_type: 'inward', reference_type: 'GRN', vehicle_no: 'GJ05BT8899', driver_name: 'Sanjay', party_name: 'Supreme Polymers', status: 'pending', created_at: '2026-06-12T09:15:00' },
+  ]);
+
+  // ── payroll ───────────────────────────────────────────────────────────────
+  if (u.includes('/payroll/') && u.includes('/payslip')) return mockResolve({
+    employee_name: 'Ramesh Kumar', payroll_month: '2026-05', basic: 14667, hra: 4400, conveyance: 2933,
+    gross: 22000, pf: 1760, esic: 143, pt: 200, total_deductions: 2103, net_pay: 19897,
+  });
+  if (u.includes('/payroll')) return mockResolve([
+    { id: 'PR-001', employee_id: 'EMP-001', employee_name: 'Ramesh Kumar', payroll_month: '2026-05', gross: 22000, deductions: 2103, net_pay: 19897, status: 'paid' },
+    { id: 'PR-002', employee_id: 'EMP-003', employee_name: 'Anita Singh', payroll_month: '2026-05', gross: 35000, deductions: 2050, net_pay: 32950, status: 'approved' },
+  ]);
+
+  // ── employee vault ────────────────────────────────────────────────────────
+  if (u.includes('/employee-vault/document-types')) return mockResolve({
+    document_types: ['PANCARD', 'AADHAR CARD', 'Passport', 'Education Certificate', 'Experience Letter', 'Offer Letter', 'Bank Passbook'],
+  });
+  if (u.includes('/employee-vault/documents/expiring')) return mockResolve([]);
+  if (u.includes('/employee-vault/') && u.includes('/vault-summary')) return mockResolve({
+    documents: [], assets: [], document_count: 0, asset_count: 0,
+  });
+
+  // ── import bridge ─────────────────────────────────────────────────────────
+  if (u.includes('/imports/exchange-rates')) return mockResolve({
+    USD: 84.2, EUR: 91.5, CNY: 11.6, updated_at: '2026-06-12T08:00:00',
+  });
+  if (u.includes('/imports/purchase-orders')) return mockResolve([
+    { id: 'IPO-001', po_no: 'IMP-PO-2026-004', supplier: 'Jiangsu Films Co', country: 'China', currency: 'USD', total_value: 42000, status: 'in_transit', eta: '2026-06-25' },
+  ]);
+  if (u.includes('/imports')) return mockResolve([]);
+
+  // ── sales incentives ──────────────────────────────────────────────────────
+  if (u.includes('/sales-incentives/targets')) return mockResolve([
+    { id: 'TGT-001', employee_id: 'EMP-003', employee_name: 'Anita Singh', target_type: 'monthly', period: '2026-06', target_amount: 800000, achieved_amount: 620000, achievement_pct: 77.5, status: 'active' },
+    { id: 'TGT-002', employee_id: 'EMP-001', employee_name: 'Ramesh Kumar', target_type: 'monthly', period: '2026-06', target_amount: 500000, achieved_amount: 510000, achievement_pct: 102.0, status: 'achieved' },
+  ]);
+  if (u.includes('/sales-incentives/slabs')) return mockResolve([
+    { id: 'SLAB-1', name: 'Base', min_pct: 80, max_pct: 99, incentive_pct: 1.0 },
+    { id: 'SLAB-2', name: 'Target', min_pct: 100, max_pct: 119, incentive_pct: 2.0 },
+    { id: 'SLAB-3', name: 'Stretch', min_pct: 120, max_pct: 999, incentive_pct: 3.0 },
+  ]);
+  if (u.includes('/sales-incentives/payouts')) return mockResolve([
+    { id: 'PAY-INC-001', employee_name: 'Ramesh Kumar', period: '2026-05', amount: 10200, status: 'paid' },
+  ]);
+  if (u.includes('/sales-incentives/leaderboard')) return mockResolve([
+    { rank: 1, employee_name: 'Ramesh Kumar', achieved: 510000, target: 500000, pct: 102.0 },
+    { rank: 2, employee_name: 'Anita Singh', achieved: 620000, target: 800000, pct: 77.5 },
+  ]);
+
   // ── POST/PUT/PATCH/DELETE fallback ────────────────────────────────────────
   if (method === 'post' || method === 'put' || method === 'patch' || method === 'delete')
     return mockResolve({ success: true, id: 'DEMO-' + Date.now() });
@@ -432,12 +491,26 @@ function mockApi(method, url) {
 
 // ── EXPORTED API OBJECT ───────────────────────────────────────────────────────
 // Drop-in replacement: same .get/.post/.put/.delete interface as before.
+// Live call with optional mock fallback — pages never crash on a missing endpoint
+const liveOrMock = async (method, url, payload) => {
+  if (DEMO_MODE) return mockApi(method, url);
+  try {
+    return await frappeRequest(method, url, payload);
+  } catch (err) {
+    if (MOCK_FALLBACK && method === 'get') {
+      console.warn(`[api] Frappe failed for ${url} — using mock fallback`, err?.message);
+      return mockApi(method, url);
+    }
+    throw err;
+  }
+};
+
 const api = {
-  get:    (url, cfg)  => DEMO_MODE ? mockApi('get',    url) : frappeRequest('get',    url, cfg?.params),
-  post:   (url, data) => DEMO_MODE ? mockApi('post',   url) : frappeRequest('post',   url, data),
-  put:    (url, data) => DEMO_MODE ? mockApi('put',    url) : frappeRequest('put',    url, data),
-  patch:  (url, data) => DEMO_MODE ? mockApi('patch',  url) : frappeRequest('patch',  url, data),
-  delete: (url)       => DEMO_MODE ? mockApi('delete', url) : frappeRequest('delete', url),
+  get:    (url, cfg)  => liveOrMock('get',    url, cfg?.params),
+  post:   (url, data) => liveOrMock('post',   url, data),
+  put:    (url, data) => liveOrMock('put',    url, data),
+  patch:  (url, data) => liveOrMock('patch',  url, data),
+  delete: (url)       => liveOrMock('delete', url),
 
   // Frappe-specific helpers (available to pages that want native Frappe calls)
   frappe: {

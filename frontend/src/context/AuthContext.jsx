@@ -8,7 +8,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const DEMO_MODE = true;
+const DEMO_MODE = (import.meta.env.VITE_DEMO_MODE ?? 'true') !== 'false';
 const FRAPPE_URL = import.meta.env.VITE_BACKEND_URL || 'http://172.30.52.244:8000';
 
 const DEMO_USER = {
