@@ -35,6 +35,7 @@ const COMMANDS = [
   { name: 'Sales Incentives', href: '/sales-incentives', group: 'Navigate', icon: TrendingUp, keywords: 'target slab payout leaderboard' },
   { name: 'Buying DNA', href: '/buying-dna', group: 'Navigate', icon: Dna, keywords: 'rhythm pattern follow-up' },
   { name: 'Customer Health', href: '/customer-health', group: 'Navigate', icon: Heart, keywords: 'score debtor risk' },
+  { name: 'Analytics Hub', href: '/analytics-hub', group: 'Navigate', icon: BarChart3, keywords: 'report pivot dimension daily weekly monthly power bi multi' },
   { name: 'Analytics', href: '/analytics', group: 'Navigate', icon: BarChart3, keywords: 'reports profit sales' },
   { name: 'Quality', href: '/quality', group: 'Navigate', icon: Shield, keywords: 'inspection complaint scrap' },
   { name: 'Approvals', href: '/approvals', group: 'Navigate', icon: Shield, keywords: 'workflow pending' },

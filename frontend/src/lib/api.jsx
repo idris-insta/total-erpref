@@ -157,6 +157,35 @@ const frappeRequest = async (method, url, payload) => {
     return { data: { employees: r.data.data, total: r.data.data.length } };
   }
 
+  // ── AI Action inbox (IB AI Action queue) ──────────────────────────────────
+  if (u.includes('/ai/actions/') && u.includes('/approve')) {
+    const name = url.split('/ai/actions/')[1].split('/')[0];
+    const r = await frappeAxios.post(
+      '/api/method/instabiz.instabiz.doctype.ib_ai_action.ib_ai_action.approve_and_send',
+      { name });
+    return { data: r.data.message };
+  }
+  if (u.includes('/ai/actions/') && u.includes('/reject')) {
+    const name = url.split('/ai/actions/')[1].split('/')[0];
+    const r = await frappeAxios.post(
+      '/api/method/instabiz.instabiz.doctype.ib_ai_action.ib_ai_action.reject',
+      { name });
+    return { data: r.data.message };
+  }
+  if (u.includes('/ai/actions')) {
+    const r = await frappeAxios.get(
+      '/api/method/instabiz.instabiz.doctype.ib_ai_action.ib_ai_action.get_pending_actions');
+    return { data: r.data.message || [] };
+  }
+
+  // ── Analytics Hub (multi-dimensional reporting) ───────────────────────────
+  if (u.includes('/analytics/report')) {
+    const r = await frappeAxios.get(
+      '/api/method/instabiz.ib_ai.reporting.get_analytics',
+      { params: payload });
+    return { data: r.data.message };
+  }
+
   // ── dashboard ─────────────────────────────────────────────────────────────
   if (u.includes('/dashboard')) {
     // No single Frappe endpoint — return lightweight snapshot
