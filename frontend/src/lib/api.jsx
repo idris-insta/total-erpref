@@ -298,16 +298,23 @@ function mockApi(method, url) {
   if (u.includes('/hrms')) return mockResolve({ employees: MOCK_EMPLOYEES });
 
   // ── CUSTOMERS / HEALTH ────────────────────────────────────────────────────
-  if (u.includes('/customer-health/scores')) return mockResolve({ scores: MOCK_CUSTOMERS.map(c => ({
+  if (u.includes('/customer-health/scores')) return mockResolve({ scores: MOCK_CUSTOMERS.map((c, i) => ({
     ...c,
     account_id: c.id,
     account_name: c.name,      // CustomerHealth.jsx uses .account_name
+    contact_name: ['Vikas Shah', 'Rajesh Patel', 'Priya Nair', 'Global Desk', 'Star Admin'][i] || 'Contact',
     health_score: c.score,
     health_status: c.score >= 80 ? 'EXCELLENT' : c.score >= 60 ? 'HEALTHY' : c.score >= 40 ? 'AT_RISK' : 'CRITICAL',
+    buying_status: c.score >= 80 ? 'NO_ACTION' : c.score >= 60 ? 'PRE_EMPTIVE_CHECK' : c.score >= 40 ? 'GENTLE_REMINDER' : 'URGENT_FOLLOWUP',
+    days_since_last_order: [12, 28, 6, 47, 19][i] ?? 0,
+    debtor_segment: c.score >= 85 ? 'GOLD' : c.score >= 70 ? 'SILVER' : c.score >= 50 ? 'BRONZE' : 'BLOCKED',
+    payment_score: Math.round(c.score * 0.9),
+    total_outstanding: c.outstanding || 0,
+    overdue_amount: c.score < 60 ? Math.round((c.outstanding || 0) * 0.4) : 0,
     risk_factors: c.score < 70 ? ['Overdue payment', 'Low order frequency'] : [],
     recommended_actions: ['Schedule call', 'Review credit terms'],
     contact_phone: '9876543210',
-  })), summary: { avg_health_score: 76, green: 3, amber: 1, red: 1 } });
+  })), summary: { avg_health_score: 76, total_customers: MOCK_CUSTOMERS.length, green: 3, amber: 1, red: 1, total_at_risk_outstanding: 133000, healthy_count: 3 } });
   if (u.includes('/customer-health/widget')) return mockResolve({
     summary: { avg_health_score: 76, total_customers: 5, total_at_risk_outstanding: 133000, healthy_count: 3 },
     health_distribution: { EXCELLENT: 1, HEALTHY: 2, AT_RISK: 1, CRITICAL: 1 },

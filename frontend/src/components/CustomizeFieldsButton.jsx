@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Settings2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isAdminRole } from '../context/AuthContext';
 
 /**
  * CustomizeFieldsButton - A button that navigates to Field Registry for a specific module/entity
@@ -28,7 +28,7 @@ const CustomizeFieldsButton = ({
   const { user } = useAuth();
   
   // Only show for admin and director users
-  if (!user || (user.role !== 'admin' && user.role !== 'director')) {
+  if (!user || !isAdminRole(user.role)) {
     return null;
   }
 

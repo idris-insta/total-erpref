@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import { toast } from 'sonner';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isAdminRole } from '../context/AuthContext';
 import { notifyFieldRegistryChange } from '../hooks/useFieldRegistry';
 
 // ==================== DRAG DROP HELPERS ====================
@@ -616,7 +616,7 @@ const FieldRegistry = () => {
     hrms: <Building2 className="h-5 w-5" />
   };
 
-  if (user?.role !== 'admin' && user?.role !== 'director') {
+  if (!isAdminRole(user?.role)) {
     return (
       <div className="p-8 text-center">
         <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />

@@ -61,7 +61,7 @@ const CustomerHealth = () => {
   };
 
   const filteredScores = scores.filter(s => {
-    const matchesSearch = s.account_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (s.account_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || s.health_status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -191,7 +191,7 @@ const CustomerHealth = () => {
                   </tr>
                 ) : (
                   filteredScores.map((customer) => {
-                    const config = statusConfig[customer.health_status];
+                    const config = statusConfig[customer.health_status] || statusConfig.AT_RISK;
                     const StatusIcon = config.icon;
                     return (
                       <tr key={customer.account_id} className={`hover:bg-slate-50 ${customer.health_status === 'CRITICAL' ? 'bg-red-50/30' : ''}`}>
@@ -218,10 +218,10 @@ const CustomerHealth = () => {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge className={buyingStatusColors[customer.buying_status]}>
-                            {customer.buying_status.replace(/_/g, ' ')}
+                          <Badge className={buyingStatusColors[customer.buying_status] || buyingStatusColors.NO_DATA}>
+                            {(customer.buying_status || 'NO_DATA').replace(/_/g, ' ')}
                           </Badge>
-                          {customer.days_since_last_order !== null && (
+                          {customer.days_since_last_order != null && (
                             <p className="text-xs text-slate-500 mt-1">
                               {customer.days_since_last_order}d since order
                             </p>
@@ -235,7 +235,7 @@ const CustomerHealth = () => {
                         </td>
                         <td className="px-4 py-3">
                           <div className="font-mono">
-                            <p className="font-semibold">₹{customer.total_outstanding.toLocaleString('en-IN')}</p>
+                            <p className="font-semibold">₹{(customer.total_outstanding || 0).toLocaleString('en-IN')}</p>
                             {customer.overdue_amount > 0 && (
                               <p className="text-xs text-red-600">₹{customer.overdue_amount.toLocaleString('en-IN')} overdue</p>
                             )}
@@ -243,7 +243,7 @@ const CustomerHealth = () => {
                         </td>
                         <td className="px-4 py-3 max-w-xs">
                           <ul className="text-xs text-slate-600 space-y-1">
-                            {customer.risk_factors.slice(0, 2).map((rf, i) => (
+                            {(customer.risk_factors || []).slice(0, 2).map((rf, i) => (
                               <li key={i} className="flex items-start gap-1">
                                 <span className="text-amber-500">•</span>
                                 <span>{rf}</span>

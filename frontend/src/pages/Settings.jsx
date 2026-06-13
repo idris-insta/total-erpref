@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Plus, Users as UsersIcon, Key, Building2, Shield } from 'lucide-react';
 import api from '../lib/api';
 import { toast } from 'sonner';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isAdminRole } from '../context/AuthContext';
 
 const ROLES = [
   { value: 'admin', label: 'Administrator', description: 'Full system access' },
@@ -67,7 +67,7 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    if (currentUser?.role === 'admin') {
+    if (isAdminRole(currentUser?.role)) {
       fetchUsers();
     }
   }, [currentUser]);
@@ -103,7 +103,7 @@ const UserManagement = () => {
     return colors[role] || 'bg-gray-100 text-gray-800';
   };
 
-  if (currentUser?.role !== 'admin') {
+  if (!isAdminRole(currentUser?.role)) {
     return (
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="p-6">

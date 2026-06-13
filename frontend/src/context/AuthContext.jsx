@@ -21,6 +21,13 @@ const DEMO_USER = {
 
 const AuthContext = createContext(null);
 
+// Roles treated as full-access administrators across the app.
+// Covers both the demo user ("System Manager") and real Frappe / legacy roles.
+const ADMIN_ROLES = ['admin', 'administrator', 'system manager', 'director'];
+
+export const isAdminRole = (role) =>
+  ADMIN_ROLES.includes(String(role || '').trim().toLowerCase());
+
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be inside AuthProvider');

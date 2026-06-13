@@ -11,7 +11,7 @@ import { Plus, Wand2, FileText, Bell, Mail, Code, Download, Upload, Play, Trash2
 import { Textarea } from '../components/ui/textarea';
 import api from '../lib/api';
 import { toast } from 'sonner';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, isAdminRole } from '../context/AuthContext';
 
 const CustomFieldsManager = () => {
   const [customFields, setCustomFields] = useState([]);
@@ -65,7 +65,7 @@ const CustomFieldsManager = () => {
     }
   };
 
-  if (user?.role !== 'admin') {
+  if (!isAdminRole(user?.role)) {
     return (
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="p-6">
@@ -299,7 +299,7 @@ const ReportBuilder = () => {
     }));
   };
 
-  if (user?.role !== 'admin') {
+  if (!isAdminRole(user?.role)) {
     return (
       <Card className="border-slate-200 shadow-sm">
         <CardContent className="p-6">
@@ -534,7 +534,7 @@ const EmailTemplatesManager = () => {
     setTemplates(templates.map(t => t.id === id ? { ...t, is_active: !t.is_active } : t));
   };
 
-  if (user?.role !== 'admin') {
+  if (!isAdminRole(user?.role)) {
     return <Card className="p-6"><p className="text-slate-600">Only administrators can manage email templates.</p></Card>;
   }
 
@@ -680,7 +680,7 @@ const NotificationRulesManager = () => {
     setRules(rules.map(r => r.id === id ? { ...r, is_active: !r.is_active } : r));
   };
 
-  if (user?.role !== 'admin') {
+  if (!isAdminRole(user?.role)) {
     return <Card className="p-6"><p className="text-slate-600">Only administrators can manage notification rules.</p></Card>;
   }
 
