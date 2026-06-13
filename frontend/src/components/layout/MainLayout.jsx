@@ -6,7 +6,7 @@ import {
   Gauge, Truck, Banknote, Ship, FolderLock, Trophy, Receipt, PieChart, Clock,
   Layers, FileEdit, Sliders, Brain, ChevronDown, ChevronRight, MessageSquare,
   HardDrive, Upload, FileText, Zap, Dna, Search, Star, StarOff, Heart, Warehouse,
-  ClipboardList, ArrowRightLeft, Activity, GitBranch, Sparkles, Network,
+  ClipboardList, ArrowRightLeft, Activity, GitBranch, Sparkles, Network, Bot,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
@@ -14,6 +14,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { cn } from '../../lib/utils';
 import NotificationCenter from '../NotificationCenter';
+import CommandPalette from '../CommandPalette';
 
 // ── Frappe UI palette (mirrors frappe-ui CSS vars) ──────────────────────────
 // Sidebar:  white bg, gray-700 text, blue-500 active
@@ -108,6 +109,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, type: 'link' },
     { name: 'Director Center', href: '/director', icon: Gauge, type: 'link' },
+    { name: 'AI Inbox', href: '/ai-inbox', icon: Bot, type: 'link' },
     { name: 'Business Pulse', href: '/business-pulse', icon: Activity, type: 'link' },
     { name: 'OODA Loop', href: '/ooda', icon: GitBranch, type: 'link' },
     { name: 'Superpowers', href: '/superpowers', icon: Sparkles, type: 'link' },
@@ -352,11 +354,21 @@ const MainLayout = ({ children }) => {
           >
             {sidebarOpen ? <X className="h-5 w-5 text-gray-600" /> : <Menu className="h-5 w-5 text-gray-600" />}
           </button>
+          <button
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+            className="hidden md:flex items-center gap-2 px-3 h-8 rounded-md border border-gray-200 bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors text-sm ml-2"
+            data-testid="command-palette-trigger"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span className="font-inter">Search or jump to…</span>
+            <kbd className="ml-6 text-[10px] font-mono bg-white border border-gray-200 rounded px-1.5 py-0.5 text-gray-400">Ctrl K</kbd>
+          </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
             <NotificationCenter />
           </div>
         </header>
+        <CommandPalette />
 
         <main className="flex-1 overflow-y-auto p-5 bg-gray-50">
           {children}

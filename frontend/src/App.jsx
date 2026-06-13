@@ -71,6 +71,7 @@ import BusinessPulse from './pages/BusinessPulse';
 import Superpowers from './pages/Superpowers';
 import Architecture from './pages/Architecture';
 import LeadsPage from './pages/LeadsPage';
+import AIInbox from './pages/AIInbox';
 
 
 const PrivateRoute = ({ children }) => {
@@ -137,6 +138,7 @@ const AppRoutes = () => {
                 <Route path="/superpowers" element={<Superpowers />} />
                 <Route path="/architecture" element={<Architecture />} />
                 <Route path="/leads" element={<LeadsPage />} />
+                <Route path="/ai-inbox" element={<AIInbox />} />
                 
                 {/* ib-erp-main / instabiz-develop ported routes */}
                 <Route path="/customer-assignment" element={<CustomerAssignment />} />

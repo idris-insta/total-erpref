@@ -432,6 +432,32 @@ function mockApi(method, url) {
   if (u.includes('/drive')) return mockResolve({ used: 0, total: 10000 });
   if (u.includes('/documents')) return mockResolve([]);
 
+  // ── AI action inbox (IB AI Action queue from the 10 agents) ───────────────
+  if (u.includes('/ai/actions/') && (u.includes('/approve') || u.includes('/reject')))
+    return mockResolve({ success: true });
+  if (u.includes('/ai/actions')) return mockResolve([
+    { id: 'AIA-001', agent: 'Collections', channel: 'WhatsApp', ai_generated: 1,
+      reference_doctype: 'Customer', reference_name: 'Global Stickers',
+      draft_subject: 'Payment reminder — ₹35,000 overdue (47d)',
+      draft_message: 'Dear Global Stickers, your account shows ₹35,000 outstanding, overdue by 47 days. As a valued partner we request you to clear this at the earliest. Kindly share the payment UTR once done.' },
+    { id: 'AIA-002', agent: 'Lead Responder', channel: 'WhatsApp', ai_generated: 1,
+      reference_doctype: 'Lead', reference_name: 'LEAD-001',
+      draft_subject: 'First-touch reply — Vikas',
+      draft_message: 'Hi Vikas, thanks for your website enquiry! We make BOPP tapes, films & custom adhesive solutions. Could you share size, quantity and application? We\'ll send a quote within 24 hours.' },
+    { id: 'AIA-003', agent: 'Procurement', channel: 'Notification', ai_generated: 0,
+      reference_doctype: 'Item', reference_name: 'OPP-30U',
+      draft_subject: 'PO proposal: 13,900 SQM of OPP-30U',
+      draft_message: 'OPP Film 30 Micron — stock 2,100 SQM, below reorder level 8,000. 30-day consumption 7,900. Suggested PO qty: 13,900 SQM. Last supplier: Jiangsu Films @ ₹22.' },
+    { id: 'AIA-004', agent: 'Anomaly Watch', channel: 'Notification', ai_generated: 0,
+      reference_doctype: 'IB Machine', reference_name: 'COAT-BWD-001',
+      draft_subject: 'Scrap spike on COAT-BWD-001',
+      draft_message: 'Scrap 8.4% vs norm 4.0% (2.1x) on the coating line today. Recommend checking adhesive mix and web tension before next shift.' },
+    { id: 'AIA-005', agent: 'Dispatch', channel: 'WhatsApp', ai_generated: 1,
+      reference_doctype: 'Delivery Note', reference_name: 'IB-BWD-DN-00012',
+      draft_subject: 'Dispatch update: IB-BWD-DN-00012 → Ashok Packaging',
+      draft_message: 'Dear Ashok Packaging, your order has been dispatched. LR No: MH43AJ5555, Transporter: VRL Logistics. Items: BOPP Tape 48mm x5000. Thank you — Team InstaBiz.' },
+  ]);
+
   // ── gatepass ──────────────────────────────────────────────────────────────
   if (u.includes('/gatepass/transporters')) return mockResolve([
     { id: 'TR-001', transporter_name: 'VRL Logistics', contact_person: 'Mahesh', phone: '9822001100', gstin: '27AAVRL1234A1Z1', city: 'Mumbai', state: 'Maharashtra' },
