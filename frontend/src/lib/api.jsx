@@ -62,9 +62,53 @@ frappeAxios.interceptors.response.use(
   }
 );
 
+// ── FASTAPI AXIOS INSTANCE (native backend) ──────────────────────────────────
+// The React pages call the original FastAPI contract paths (/auth/login,
+// /crm/leads, /dashboard, …). The backend serves them under an /api prefix.
+const TOKEN_KEY = 'ib_token';
+const apiAxios = axios.create({
+  baseURL: FRAPPE_URL,
+  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+});
+apiAxios.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) config.headers['Authorization'] = `Bearer ${token}`;
+  return config;
+});
+apiAxios.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      if (!window.location.pathname.includes('/login')) window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
+// Normalise a page URL to the backend's /api/... namespace.
+const apiPath = (url) => (url.startsWith('/api/') ? url : '/api' + (url.startsWith('/') ? url : '/' + url));
+
+// Native FastAPI request — direct pass-through with JWT auth.
+const fastapiRequest = async (method, url, payload) => {
+  // Capture JWT on login/register so subsequent calls are authenticated.
+  if (url.includes('/auth/login') || url.includes('/auth/register')) {
+    const r = await apiAxios.post(apiPath(url), payload);
+    if (r.data?.token) localStorage.setItem(TOKEN_KEY, r.data.token);
+    return r;
+  }
+  const p = apiPath(url);
+  if (method === 'get')    return apiAxios.get(p, { params: payload });
+  if (method === 'post')   return apiAxios.post(p, payload);
+  if (method === 'put')    return apiAxios.put(p, payload);
+  if (method === 'patch')  return apiAxios.patch(p, payload);
+  if (method === 'delete') return apiAxios.delete(p);
+  return apiAxios.get(p);
+};
+
 // ── FRAPPE HELPER: map generic URL → Frappe endpoint ─────────────────────────
-// Translates paths used by pages (inherited from old FastAPI contract) into
-// proper Frappe REST or whitelisted method calls.
+// Retained for `api.frappe.*` helpers and any page that wants native Frappe
+// calls. The main live path now uses fastapiRequest (see liveOrMock).
 const frappeRequest = async (method, url, payload) => {
   const u = url.toLowerCase();
 
@@ -557,10 +601,10 @@ function mockApi(method, url) {
 const liveOrMock = async (method, url, payload) => {
   if (DEMO_MODE) return mockApi(method, url);
   try {
-    return await frappeRequest(method, url, payload);
+    return await fastapiRequest(method, url, payload);
   } catch (err) {
     if (MOCK_FALLBACK && method === 'get') {
-      console.warn(`[api] Frappe failed for ${url} — using mock fallback`, err?.message);
+      console.warn(`[api] backend failed for ${url} — using mock fallback`, err?.message);
       return mockApi(method, url);
     }
     throw err;
