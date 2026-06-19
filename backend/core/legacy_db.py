@@ -88,6 +88,8 @@ MODEL_MAP = {
     'delivery_challans': DeliveryChallan,
     'ai_queries': AIQuery,
     'custom_reports': CustomReport,
+    'ai_actions': AIAction,
+    'bank_transactions': BankTransaction,
     # Aliases for compatibility
     'customers': Account,
 }

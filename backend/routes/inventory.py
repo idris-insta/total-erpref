@@ -680,36 +680,45 @@ async def receive_transfer(transfer_id: str, received_items: List[dict], current
 # ==================== STATS ====================
 @router.get("/stats/overview")
 async def get_inventory_stats(current_user: dict = Depends(get_current_user)):
-    total_items = await db.items.count_documents({"is_active": True})
-    total_warehouses = await db.warehouses.count_documents({"is_active": True})
-    
-    # Low stock items
-    low_stock_pipeline = [
-        {"$match": {"is_active": True}},
-        {"$match": {"$expr": {"$lte": ["$current_stock", "$reorder_level"]}}},
-        {"$count": "count"}
-    ]
-    low_stock_result = await db.items.aggregate(low_stock_pipeline).to_list(1)
-    low_stock_count = low_stock_result[0]["count"] if low_stock_result else 0
-    
-    # Pending transfers
-    pending_transfers = await db.stock_transfers.count_documents({"status": {"$in": ["draft", "in_transit"]}})
-    
-    # Stock value
-    value_pipeline = [
-        {"$group": {"_id": None, "total": {"$sum": "$total_value"}}}
-    ]
-    value_result = await db.stock_balance.aggregate(value_pipeline).to_list(1)
-    total_value = value_result[0]["total"] if value_result else 0
-    
-    # Stock by category
-    category_pipeline = [
-        {"$match": {"is_active": True}},
-        {"$group": {"_id": "$category", "count": {"$sum": 1}, "stock": {"$sum": "$current_stock"}}}
-    ]
-    category_result = await db.items.aggregate(category_pipeline).to_list(100)
-    by_category = {r["_id"]: {"count": r["count"], "stock": r["stock"]} for r in category_result if r["_id"]}
-    
+    # Compute everything in Python from find() results — the Postgres legacy
+    # adapter doesn't support $expr / $group pipelines used by the old Mongo code.
+    items = await db.items.find({"is_active": True}).to_list(100000)
+    total_items = len(items)
+
+    try:
+        warehouses = await db.warehouses.find({"is_active": True}).to_list(100000)
+        total_warehouses = len(warehouses)
+    except Exception:
+        total_warehouses = 0
+
+    low_stock_count = sum(
+        1 for it in items
+        if (it.get("current_stock") or 0) <= (it.get("reorder_level") or 0)
+    )
+
+    try:
+        transfers = await db.stock_transfers.find(
+            {"status": {"$in": ["draft", "in_transit"]}}
+        ).to_list(100000)
+        pending_transfers = len(transfers)
+    except Exception:
+        pending_transfers = 0
+
+    try:
+        balances = await db.stock_balance.find({}).to_list(100000)
+        total_value = sum((b.get("total_value") or 0) for b in balances)
+    except Exception:
+        total_value = 0
+
+    by_category = {}
+    for it in items:
+        cat = it.get("category")
+        if not cat:
+            continue
+        slot = by_category.setdefault(cat, {"count": 0, "stock": 0})
+        slot["count"] += 1
+        slot["stock"] += (it.get("current_stock") or 0)
+
     return {
         "total_items": total_items,
         "total_warehouses": total_warehouses,

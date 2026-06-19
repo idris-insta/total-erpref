@@ -105,6 +105,12 @@ from models.entities.other import (
     CustomReport
 )
 
+# AI action queue + bank reconciliation (standalone module — no cross-FKs)
+from models.entities.ai_actions import (
+    AIAction,
+    BankTransaction,
+)
+
 __all__ = [
     # Base
     'Base', 'UUIDMixin', 'TimestampMixin',
@@ -140,4 +146,6 @@ __all__ = [
     'Gatepass', 'DeliveryChallan',
     # AI
     'AIQuery', 'CustomReport',
+    # AI action queue + bank reconciliation
+    'AIAction', 'BankTransaction',
 ]

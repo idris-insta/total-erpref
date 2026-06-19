@@ -28,15 +28,32 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 
+async def _agent_scheduler():
+    """Dependency-free daily loop: run AI agents every 24h (first run after 60s)."""
+    import asyncio
+    from routes.ai_actions import run_all_agents
+    await asyncio.sleep(60)
+    while True:
+        try:
+            results = await run_all_agents()
+            logger.info("AI agents ran: %s", results)
+        except Exception as e:
+            logger.warning("AI agent run failed: %s", e)
+        await asyncio.sleep(24 * 60 * 60)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler"""
+    import asyncio
     # Startup
     logger.info("Starting up - initializing database...")
     await init_db()
     logger.info("Database initialized successfully")
+    scheduler_task = asyncio.create_task(_agent_scheduler())
     yield
     # Shutdown
+    scheduler_task.cancel()
     logger.info("Shutting down - closing database connection...")
     await close_db()
 
@@ -159,6 +176,7 @@ from routes import document_communication
 from routes import field_registry
 from routes import warehouse_stock
 from routes import production_stages
+from routes import ai_actions, finance
 
 # Import v1 API routes (Layered Architecture - PostgreSQL)
 from api.v1.crm import router as crm_v1_router
@@ -215,6 +233,8 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 api_router.include_router(custom_fields.router, prefix="/custom-fields", tags=["Custom Fields"])
 api_router.include_router(core_engine.router, prefix="/core", tags=["Core Engine"])
 api_router.include_router(ai_bi.router, prefix="/ai", tags=["AI Business Intelligence"])
+api_router.include_router(ai_actions.router, prefix="/ai", tags=["AI Action Queue"])
+api_router.include_router(finance.router, prefix="/finance", tags=["Finance Depth"])
 
 api_router.include_router(chat.router, prefix="/chat", tags=["Internal Chat"])
 api_router.include_router(drive.router, prefix="/drive", tags=["Drive Storage"])
