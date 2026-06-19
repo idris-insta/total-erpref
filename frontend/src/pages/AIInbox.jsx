@@ -10,19 +10,11 @@ import api from '../lib/api';
 import { toast } from 'sonner';
 
 const AGENT_META = {
-  Collections:          { icon: DollarSign,    color: 'text-red-600',    bg: 'bg-red-50' },
-  'Daily Brief':        { icon: Sparkles,      color: 'text-blue-600',   bg: 'bg-blue-50' },
-  'Lead Responder':     { icon: Users,         color: 'text-purple-600', bg: 'bg-purple-50' },
-  'Anomaly Watch':      { icon: AlertTriangle, color: 'text-amber-600',  bg: 'bg-amber-50' },
-  'Quote Assistant':    { icon: DollarSign,    color: 'text-emerald-600',bg: 'bg-emerald-50' },
-  Procurement:          { icon: Package,       color: 'text-orange-600', bg: 'bg-orange-50' },
-  'Production Planner': { icon: Factory,       color: 'text-cyan-600',   bg: 'bg-cyan-50' },
-  Quality:              { icon: AlertTriangle, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  HR:                   { icon: Users,         color: 'text-pink-600',   bg: 'bg-pink-50' },
-  Dispatch:             { icon: Truck,         color: 'text-teal-600',   bg: 'bg-teal-50' },
+  auto_quote:      { label: 'Auto-Quote',      icon: DollarSign,    color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  demand_forecast: { label: 'Demand Forecast', icon: Sparkles,      color: 'text-blue-600',    bg: 'bg-blue-50' },
+  smart_reorder:   { label: 'Smart Reorder',   icon: Package,       color: 'text-orange-600',  bg: 'bg-orange-50' },
+  collections:     { label: 'Collections',     icon: DollarSign,    color: 'text-red-600',     bg: 'bg-red-50' },
 };
-
-const CHANNEL_ICON = { Email: Mail, WhatsApp: MessageSquare, Notification: Bell };
 
 export default function AIInbox() {
   const [actions, setActions] = useState([]);
@@ -32,7 +24,7 @@ export default function AIInbox() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/ai/actions?status=Pending Approval');
+      const res = await api.get('/ai/actions?status=pending');
       setActions(Array.isArray(res.data) ? res.data : (res.data?.actions || []));
     } catch {
       toast.error('Failed to load AI actions');
@@ -96,9 +88,8 @@ export default function AIInbox() {
       ) : (
         <div className="grid gap-3">
           {shown.map((a) => {
-            const meta = AGENT_META[a.agent] || { icon: Sparkles, color: 'text-slate-600', bg: 'bg-slate-50' };
+            const meta = AGENT_META[a.agent] || { label: a.agent, icon: Sparkles, color: 'text-slate-600', bg: 'bg-slate-50' };
             const AgentIcon = meta.icon;
-            const ChIcon = CHANNEL_ICON[a.channel] || Bell;
             return (
               <Card key={a.id} className="border-slate-200 hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
@@ -108,21 +99,21 @@ export default function AIInbox() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant="outline" className="text-[11px]">{a.agent}</Badge>
-                        <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-                          <ChIcon className="h-3 w-3" />{a.channel}
-                        </span>
+                        <Badge variant="outline" className="text-[11px]">{meta.label}</Badge>
+                        <span className="text-xs text-slate-400">{a.action_type}</span>
                         {a.ai_generated ? (
                           <Badge className="bg-purple-100 text-purple-700 border-0 text-[10px]">
                             <Sparkles className="h-2.5 w-2.5 mr-1" />AI-drafted
                           </Badge>
                         ) : null}
                       </div>
-                      <p className="font-semibold text-slate-900 mt-1">{a.draft_subject}</p>
-                      <p className="text-sm text-slate-600 mt-1 line-clamp-3"
-                         dangerouslySetInnerHTML={{ __html: a.draft_message }} />
-                      {a.reference_name && (
-                        <p className="text-xs text-slate-400 mt-1">Ref: {a.reference_doctype} · {a.reference_name}</p>
+                      <p className="font-semibold text-slate-900 mt-1">{a.title}</p>
+                      <p className="text-sm text-slate-600 mt-1 line-clamp-3">{a.summary}</p>
+                      {a.draft?.message && (
+                        <p className="text-xs text-slate-500 mt-1 italic line-clamp-2">"{a.draft.message}"</p>
+                      )}
+                      {a.reference_id && (
+                        <p className="text-xs text-slate-400 mt-1">Ref: {a.reference_type} · {a.reference_id?.slice(0, 8)}</p>
                       )}
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">

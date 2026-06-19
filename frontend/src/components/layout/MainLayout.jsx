@@ -145,6 +145,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       ],
     },
     { name: 'Accounts', href: '/accounts', icon: Calculator, type: 'link' },
+    { name: 'Finance Intelligence', href: '/finance', icon: Calculator, type: 'link' },
     { name: 'Collector', href: '/collector', icon: Zap, type: 'link' },
     {
       name: 'HRMS', icon: Users, type: 'group',

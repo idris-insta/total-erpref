@@ -73,6 +73,7 @@ import Architecture from './pages/Architecture';
 import LeadsPage from './pages/LeadsPage';
 import AIInbox from './pages/AIInbox';
 import AnalyticsHub from './pages/AnalyticsHub';
+import FinanceDepth from './pages/FinanceDepth';
 
 
 const PrivateRoute = ({ children }) => {
@@ -108,6 +109,7 @@ const AppRoutes = () => {
                 <Route path="/production-stages/*" element={<ProductionStages />} />
                 <Route path="/procurement/*" element={<Procurement />} />
                 <Route path="/accounts/*" element={<Accounts />} />
+                <Route path="/finance" element={<FinanceDepth />} />
                 <Route path="/hrms/*" element={<HRMS />} />
                 <Route path="/quality/*" element={<Quality />} />
                 <Route path="/settings" element={<Settings />} />
